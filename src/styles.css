@@ -1,0 +1,28 @@
+body { background: #f5f6f8; }
+.page-title { font-size: 1.4rem; margin-bottom: 1rem; }
+.table > :not(caption) > * > * { vertical-align: middle; }
+.money { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+
+/* POS */
+.product-tile { text-align: left; min-height: 84px; }
+.product-tile:disabled { opacity: .55; }
+.cart-total { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.change-box { font-size: 1.5rem; font-weight: 700; }
+@media (min-width: 992px) { .cart-sticky { position: sticky; top: 76px; } }
+
+/* Receipt (also used for printing) */
+.receipt { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; max-width: 320px; margin: 0 auto; }
+.receipt table { width: 100%; }
+.receipt td { padding: 1px 0; vertical-align: top; }
+.receipt .sep { border-top: 1px dashed #000; margin: 6px 0; }
+.receipt .row-split { display: flex; justify-content: space-between; }
+
+@media print {
+  @page { margin: 4mm; }
+  body { background: #fff; }
+  body * { visibility: hidden !important; }
+  .receipt-print, .receipt-print * { visibility: visible !important; }
+  .receipt-print { position: absolute; left: 0; top: 0; width: 72mm; max-width: none; color: #000; }
+  .modal, .modal-dialog, .modal-content, .modal-body { position: static !important; overflow: visible !important; height: auto !important; max-height: none !important; }
+  .modal-backdrop { display: none !important; }
+}
