@@ -21,7 +21,7 @@ export default function Login() {
     <div className="container" style={{ maxWidth: 420 }}>
       <div className="card shadow-sm" style={{ marginTop: '12vh' }}>
         <div className="card-body p-4">
-          <h1 className="h4 text-center mb-4">🏪 Che's Tindahan POS</h1>
+          <h1 className="h4 text-center mb-4">🏪 Che's Tindahan</h1>
           {(error || message) && <div className="alert alert-danger" role="alert">{error || message}</div>}
           <form onSubmit={submit}>
             <div className="mb-3">
