@@ -1,12 +1,14 @@
+html { font-size: clamp(16px, calc(15px + 0.15vw), 18px); }
 body { background: #f5f6f8; }
-.page-title { font-size: 1.4rem; margin-bottom: 1rem; }
+.app-main { max-width: 1920px; padding-inline: clamp(1rem, 2vw, 2.25rem); }
+.page-title { font-size: clamp(1.4rem, 1.2rem + 0.35vw, 1.8rem); margin-bottom: 1rem; }
 .table > :not(caption) > * > * { vertical-align: middle; }
 .money { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 
 /* POS */
-.product-tile { text-align: left; min-height: 84px; }
+.product-tile { text-align: left; min-height: clamp(84px, 6vw, 112px); }
 .product-tile:disabled { opacity: .55; }
-.cart-total { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.cart-total { font-size: clamp(2rem, 2rem + 0.5vw, 2.5rem); font-weight: 700; line-height: 1.1; }
 .change-box { font-size: 1.5rem; font-weight: 700; }
 @media (min-width: 992px) { .cart-sticky { position: sticky; top: 76px; } }
 

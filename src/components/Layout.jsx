@@ -20,7 +20,7 @@ export default function Layout() {
   useLocation();                                    // re-render on navigation
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+      <nav className="navbar navbar-expand-xl navbar-dark bg-dark sticky-top">
         <div className="container-fluid">
           <span className="navbar-brand">🏪 {profile.store_name}</span>
           <button className="navbar-toggler" type="button" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
@@ -39,7 +39,7 @@ export default function Layout() {
           </div>
         </div>
       </nav>
-      <main className="container-fluid py-3" style={{ maxWidth: 1400 }}><Outlet /></main>
+      <main className="container-fluid app-main py-3"><Outlet /></main>
     </>
   );
 }
