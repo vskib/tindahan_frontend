@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import { isAmbiguous } from '../lib/checkout.js';
 import { useDebounced, useFetch } from '../lib/hooks.js';
@@ -8,6 +8,7 @@ import Receipt from '../components/Receipt.jsx';
 import Modal from '../components/Modal.jsx';
 import { ErrorAlert, Loading, Empty, Spin } from '../components/Ui.jsx';
 
+const BarcodeScanner = lazy(() => import('../components/BarcodeScanner.jsx'));
 const QUICK_CASH = [2000, 5000, 10000, 50000, 100000];   // centavos: ₱20 ₱50 ₱100 ₱500 ₱1,000
 
 export default function POS() {
@@ -22,6 +23,7 @@ export default function POS() {
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const attempt = useRef(null);      // { key, items, cash }: one idempotency key per checkout attempt
   const inFlight = useRef(false);    // blocks double-clicks even before React re-renders
   const searchRef = useRef(null);
@@ -56,6 +58,19 @@ export default function POS() {
       if (pick) { add(pick); setSearch(''); }
       else setMessage({ kind: 'warning', text: data.length ? 'Several products match. Tap the one you want.' : 'No product found.' });
     } catch (err) { setMessage({ kind: 'danger', text: err.message }); }
+  };
+  const onBarcodeScan = async (barcode) => {
+    setScannerOpen(false);
+    try {
+      const { data: product } = await api(`/api/products/by-barcode?barcode=${encodeURIComponent(barcode.trim())}`);
+      if (product?.stock_qty < 1) setMessage({ kind: 'warning', text: `${product.name} is out of stock.` });
+      else if (product) { add(product); setSearch(''); }
+    } catch (err) {
+      setMessage(err.status === 404
+        ? { kind: 'warning', text: `No active product found for barcode ${barcode}.` }
+        : { kind: 'danger', text: err.message });
+    }
+    searchRef.current?.focus();
   };
 
   async function submit() {
@@ -108,9 +123,12 @@ export default function POS() {
   return (
     <div className="row g-3">
       <div className="col-lg-7">
-        <input ref={searchRef} className="form-control form-control-lg mb-3" placeholder="Search by name or scan barcode/SKU…"
-          aria-label="Search products by name or barcode" autoFocus value={search} disabled={locked}
-          onChange={(e) => setSearch(e.target.value)} onKeyDown={onSearchKey} />
+        <div className="input-group input-group-lg mb-3">
+          <input ref={searchRef} className="form-control" placeholder="Search by name or scan barcode/SKU…"
+            aria-label="Search products by name or barcode" autoFocus value={search} disabled={locked}
+            onChange={(e) => setSearch(e.target.value)} onKeyDown={onSearchKey} />
+          <button className="btn btn-outline-primary" type="button" disabled={locked} onClick={() => setScannerOpen(true)}>Scan barcode</button>
+        </div>
         <ErrorAlert error={products.error} onRetry={products.reload} />
         {products.loading && !products.data && <Loading />}
         {products.data && list.length === 0 && <Empty>No products found.</Empty>}
@@ -210,6 +228,11 @@ export default function POS() {
           </div>
           <Receipt receipt={receipt} />
         </Modal>
+      )}
+      {scannerOpen && (
+        <Suspense fallback={<Loading text="Loading camera scanner…" />}>
+          <BarcodeScanner onClose={() => setScannerOpen(false)} onScan={onBarcodeScan} />
+        </Suspense>
       )}
     </div>
   );

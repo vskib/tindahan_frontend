@@ -44,6 +44,16 @@ afterAll(async () => { server?.close(); await svc?.end(); await infra?.stop(); }
 
 describe('end to end through the real backend', () => {
   let pid, txn;
+  it('cashier: offers camera scanning and explains when the browser cannot provide a camera', async () => {
+    loginAs(cashier, 'cashier', 'Juan Cashier');
+    const user = userEvent.setup();
+    render(<POS />);
+    await user.click(screen.getByRole('button', { name: 'Scan barcode' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent(/Camera access requires a secure connection|Camera scanning is not supported/);
+    await user.click(screen.getAllByRole('button', { name: 'Close' }).at(-1));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('cashier: finds a product, takes cash, completes the sale, gets a receipt; the database agrees', async () => {
     pid = await mkProduct(svc, owner, { name: `${tag} Sardines`, price: 2575, cost: 1800, stock: 10 });
     loginAs(cashier, 'cashier', 'Juan Cashier');
