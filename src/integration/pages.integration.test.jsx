@@ -90,6 +90,7 @@ describe('end to end through the real backend', () => {
     const user = userEvent.setup();
     const { unmount } = render(<MemoryRouter><Sales /></MemoryRouter>);
     expect(await screen.findByText(txn)).toBeInTheDocument();
+    expect(await screen.findByText('Weekly sales report')).toBeInTheDocument();
     const row = screen.getByText(txn).closest('tr');
     expect(row).toHaveTextContent('₱51.50');
     expect(row).toHaveTextContent('₱100.00');

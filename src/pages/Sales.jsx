@@ -29,6 +29,7 @@ export default function Sales() {
   const today = todayYmd();
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
+  const [period, setPeriod] = useState('week');
   const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState(null);
   const pageSize = 20;
@@ -36,10 +37,37 @@ export default function Sales() {
 
   const list = useFetch(() => (rangeError ? Promise.resolve(null) : api(`/api/sales?from=${from}&to=${to}&page=${page}&pageSize=${pageSize}`)), [from, to, page, rangeError]);
   const days = useFetch(() => (!isOwner || rangeError ? Promise.resolve(null) : api(`/api/reports/daily-sales?from=${from}&to=${to}`)), [from, to, isOwner, rangeError]);
+  const report = useFetch(() => (rangeError ? Promise.resolve(null) : api(`/api/reports/period-sales?from=${from}&to=${to}&period=${period}`)), [from, to, period, rangeError]);
 
   const setRange = (a, b) => { setFrom(a); setTo(b); setPage(1); };
+  const setCurrentWeek = () => {
+    const weekday = new Date(`${today}T00:00:00Z`).getUTCDay();
+    setRange(addDays(today, -((weekday + 6) % 7)), today);
+  };
+  const setCurrentMonth = () => setRange(`${today.slice(0, 7)}-01`, today);
+  const downloadReport = () => {
+    const rows = report.data?.data ?? [];
+    const escape = (value) => `"${String(value).replaceAll('"', '""')}"`;
+    const csv = [
+      ['Period', 'Transactions', 'Total sales (PHP)'],
+      ...rows.map((r) => [
+        period === 'week' ? `Week of ${r.period_start}` : r.period_start.slice(0, 7),
+        r.txn_count,
+        (Number(r.total_centavos) / 100).toFixed(2),
+      ]),
+    ].map((row) => row.map(escape).join(',')).join('\r\n');
+    const url = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${period === 'week' ? 'weekly' : 'monthly'}-sales-${from}-to-${to}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 0);
+  };
   const rows = list.data?.data ?? [];
   const dayRows = days.data?.data ?? [];
+  const reportRows = report.data?.data ?? [];
   const grand = dayRows.reduce((s, r) => s + Number(r.total_centavos), 0);
   const grandCount = dayRows.reduce((s, r) => s + Number(r.txn_count), 0);
   return (
@@ -52,10 +80,39 @@ export default function Sales() {
           <button className="btn btn-outline-secondary" onClick={() => setRange(today, today)}>Today</button>
           <button className="btn btn-outline-secondary" onClick={() => setRange(addDays(today, -1), addDays(today, -1))}>Yesterday</button>
           <button className="btn btn-outline-secondary" onClick={() => setRange(addDays(today, -6), today)}>Last 7 days</button>
+          <button className="btn btn-outline-secondary" onClick={setCurrentWeek}>This week</button>
+          <button className="btn btn-outline-secondary" onClick={setCurrentMonth}>This month</button>
         </div>
       </div>
       {rangeError && <div className="alert alert-warning">{rangeError}</div>}
-      <ErrorAlert error={list.error ?? days.error} onRetry={() => { list.reload(); days.reload(); }} />
+      <ErrorAlert error={list.error ?? days.error ?? report.error} onRetry={() => { list.reload(); days.reload(); report.reload(); }} />
+
+      <div className="card shadow-sm mb-3">
+        <div className="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+          <strong>{period === 'week' ? 'Weekly sales report' : 'Monthly sales report'}</strong>
+          <div className="d-flex gap-2 align-items-center">
+            <label className="visually-hidden" htmlFor="report-period">Report period</label>
+            <select id="report-period" className="form-select form-select-sm w-auto" value={period} onChange={(e) => setPeriod(e.target.value)}>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+            </select>
+            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={report.loading || Boolean(report.error) || reportRows.length === 0}>Download CSV</button>
+          </div>
+        </div>
+        {report.loading ? <Loading /> : report.error ? null : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
+          <div className="table-responsive"><table className="table table-sm mb-0">
+            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Total sales</th></tr></thead>
+            <tbody>{reportRows.map((r) => (
+              <tr key={r.period_start}>
+                <td>{period === 'week' ? r.period_start : r.period_start.slice(0, 7)}</td>
+                <td className="money">{r.txn_count}</td>
+                <td className="money fw-semibold">{pesos(Number(r.total_centavos))}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+        {!isOwner && <div className="card-footer small text-muted">This report includes only the sales you rang up.</div>}
+      </div>
 
       {isOwner && dayRows.length > 0 && (
         <div className="card shadow-sm mb-3">
