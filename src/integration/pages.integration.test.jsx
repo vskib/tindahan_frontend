@@ -91,6 +91,9 @@ describe('end to end through the real backend', () => {
     const { unmount } = render(<MemoryRouter><Sales /></MemoryRouter>);
     expect(await screen.findByText(txn)).toBeInTheDocument();
     expect(await screen.findByText('Weekly sales report')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Generate summary of sales' }));
+    expect(await screen.findByRole('columnheader', { name: 'Week starting (Monday)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download CSV' })).toBeEnabled();
     const row = screen.getByText(txn).closest('tr');
     expect(row).toHaveTextContent('₱51.50');
     expect(row).toHaveTextContent('₱100.00');

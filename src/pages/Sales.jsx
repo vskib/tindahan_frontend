@@ -9,6 +9,11 @@ import Pagination from '../components/Pagination.jsx';
 import Receipt from '../components/Receipt.jsx';
 import { Empty, ErrorAlert, Loading } from '../components/Ui.jsx';
 
+const weekStart = (ymd) => {
+  const weekday = new Date(`${ymd}T00:00:00Z`).getUTCDay();
+  return addDays(ymd, -((weekday + 6) % 7));
+};
+
 function SaleDetail({ id, onClose }) {
   const d = useFetch(() => api(`/api/sales/${id}`), [id]);
   const sale = d.data?.data;
@@ -27,9 +32,10 @@ function SaleDetail({ id, onClose }) {
 export default function Sales() {
   const { isOwner } = useAuth();
   const today = todayYmd();
-  const [from, setFrom] = useState(today);
+  const [from, setFrom] = useState(() => weekStart(today));
   const [to, setTo] = useState(today);
   const [period, setPeriod] = useState('week');
+  const [reportRequested, setReportRequested] = useState(false);
   const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState(null);
   const pageSize = 20;
@@ -37,14 +43,15 @@ export default function Sales() {
 
   const list = useFetch(() => (rangeError ? Promise.resolve(null) : api(`/api/sales?from=${from}&to=${to}&page=${page}&pageSize=${pageSize}`)), [from, to, page, rangeError]);
   const days = useFetch(() => (!isOwner || rangeError ? Promise.resolve(null) : api(`/api/reports/daily-sales?from=${from}&to=${to}`)), [from, to, isOwner, rangeError]);
-  const report = useFetch(() => (rangeError ? Promise.resolve(null) : api(`/api/reports/period-sales?from=${from}&to=${to}&period=${period}`)), [from, to, period, rangeError]);
+  const report = useFetch(() => (!reportRequested || rangeError ? Promise.resolve(null) : api(`/api/reports/period-sales?from=${from}&to=${to}&period=${period}`)), [from, to, period, rangeError, reportRequested]);
 
   const setRange = (a, b) => { setFrom(a); setTo(b); setPage(1); };
-  const setCurrentWeek = () => {
-    const weekday = new Date(`${today}T00:00:00Z`).getUTCDay();
-    setRange(addDays(today, -((weekday + 6) % 7)), today);
-  };
+  const setCurrentWeek = () => setRange(weekStart(today), today);
   const setCurrentMonth = () => setRange(`${today.slice(0, 7)}-01`, today);
+  const generateReport = () => {
+    if (reportRequested) report.reload();
+    else setReportRequested(true);
+  };
   const downloadReport = () => {
     const rows = report.data?.data ?? [];
     const escape = (value) => `"${String(value).replaceAll('"', '""')}"`;
@@ -96,10 +103,11 @@ export default function Sales() {
               <option value="week">Weekly</option>
               <option value="month">Monthly</option>
             </select>
-            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={report.loading || Boolean(report.error) || reportRows.length === 0}>Download CSV</button>
+            <button className="btn btn-sm btn-primary" onClick={generateReport} disabled={Boolean(rangeError) || report.loading}>Generate summary of sales</button>
+            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || reportRows.length === 0}>Download CSV</button>
           </div>
         </div>
-        {report.loading ? <Loading /> : report.error ? null : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
+        {report.loading && reportRequested ? <Loading /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
           <div className="table-responsive"><table className="table table-sm mb-0">
             <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Total sales</th></tr></thead>
             <tbody>{reportRows.map((r) => (
