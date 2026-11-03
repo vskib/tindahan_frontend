@@ -48,7 +48,7 @@
   .skeleton-block { display: block; width: 100%; height: .85rem; border-radius: .25rem; background: linear-gradient(90deg, #a5d6a7 25%, #f1f8f1 37%, #a5d6a7 63%); background-size: 400% 100%; animation: skeleton-shimmer 1.4s ease infinite; }
   .skeleton-block.skeleton-tall { height: 1.75rem; }
   .skeleton-table { gap: 1rem; }
-  .skeleton-table-row { display: grid; grid-template-columns: 1.3fr 1fr .8fr .6fr; gap: 1rem; align-items: center; }
+  .skeleton-table-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; align-items: center; }
   .cart-total { font-size: clamp(2rem, 2rem + .5vw, 2.5rem); font-weight: 700; line-height: 1.1; }
   .change-box { font-size: 1.5rem; font-weight: 700; }
   .receipt { max-width: 320px; margin: 0 auto; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; }

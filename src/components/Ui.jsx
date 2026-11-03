@@ -5,11 +5,11 @@ export const Loading = ({ text = 'Loading…', variant = 'content' }) => (
     <span className="sr-only">{text}</span>
     {variant === 'dashboard' ? (
       <>
-        <div className="grid grid-cols-12 gap-3 mb-3">{Array.from({ length: 4 }, (_, i) => <div className="col-span-6 lg:col-span-3" key={i}><div className="skeleton-panel"><SkeletonBlock className="w-1/2" /><SkeletonBlock className="w-3/4 skeleton-tall" /></div></div>)}</div>
-        <div className="grid grid-cols-12 gap-3"><div className="col-span-12 lg:col-span-5"><div className="skeleton-panel"><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></div></div><div className="col-span-12 lg:col-span-7"><div className="skeleton-panel"><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></div></div></div>
+        <div className="mb-3 grid grid-cols-2 gap-3 xl:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <div key={i}><div className="skeleton-panel"><SkeletonBlock className="w-1/2" /><SkeletonBlock className="w-3/4 skeleton-tall" /></div></div>)}</div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12"><div className="lg:col-span-5"><div className="skeleton-panel"><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></div></div><div className="lg:col-span-7"><div className="skeleton-panel"><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></div></div></div>
       </>
     ) : variant === 'grid' ? (
-      <div className="grid grid-cols-12 gap-2">{Array.from({ length: 6 }, (_, i) => <div className="col-span-6 md:col-span-4" key={i}><div className="skeleton-panel"><SkeletonBlock className="w-3/4" /><SkeletonBlock className="w-1/2 skeleton-tall" /><SkeletonBlock /></div></div>)}</div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{Array.from({ length: 6 }, (_, i) => <div key={i}><div className="skeleton-panel"><SkeletonBlock className="w-3/4" /><SkeletonBlock className="w-1/2 skeleton-tall" /><SkeletonBlock /></div></div>)}</div>
     ) : variant === 'table' ? (
       <div className="skeleton-panel skeleton-table">{Array.from({ length: 4 }, (_, i) => <div className="skeleton-table-row" key={i}><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></div>)}</div>
     ) : variant === 'detail' ? (
