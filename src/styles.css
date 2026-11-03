@@ -1,5 +1,5 @@
 html { font-size: clamp(16px, calc(15px + 0.15vw), 18px); }
-body { background: #f5f6f8; }
+body { background: #f5f6f8; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
 .app-main { max-width: 1920px; padding-inline: clamp(1rem, 2vw, 2.25rem); }
 .page-title { font-size: clamp(1.4rem, 1.2rem + 0.35vw, 1.8rem); margin-bottom: 1rem; }
 .table > :not(caption) > * > * { vertical-align: middle; }
