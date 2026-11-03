@@ -1,33 +1,27 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-/** Modal without a JavaScript UI framework. Esc closes it unless dismissible={false}. */
+/** Esc closes the dialog unless dismissible={false}. */
 export default function Modal({ title, onClose, children, footer, size = '', dismissible = true }) {
   const titleId = useId();
   const ref = useRef(null);
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && dismissible) onClose?.(); };
     document.addEventListener('keydown', onKey);
-    document.body.classList.add('modal-open');
     ref.current?.querySelector('input:not([disabled]), select, textarea, button.btn-primary')?.focus();
-    return () => { document.removeEventListener('keydown', onKey); document.body.classList.remove('modal-open'); };
+    return () => { document.removeEventListener('keydown', onKey); };
   }, [dismissible, onClose]);
   return createPortal(
-    <>
-      <div className="modal d-block" tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>
-        <div className={`modal-dialog modal-dialog-scrollable ${size}`}>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2 className="modal-title h5" id={titleId}>{title}</h2>
-              {dismissible && <button type="button" className="btn-close" aria-label="Close" onClick={onClose} />}
-            </div>
-            <div className="modal-body">{children}</div>
-            {footer && <div className="modal-footer">{footer}</div>}
-          </div>
+    <div className="modal modal-open" tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>
+      <div className={`modal-box max-h-[calc(100vh-2rem)] p-0 ${size}`}>
+        <div className="flex items-center justify-between border-b border-base-300 px-5 py-4">
+          <h2 className="text-lg font-semibold" id={titleId}>{title}</h2>
+          {dismissible && <button type="button" className="btn btn-sm btn-circle btn-ghost" aria-label="Close" onClick={onClose}>×</button>}
         </div>
+        <div className="max-h-[calc(100vh-12rem)] overflow-y-auto p-5">{children}</div>
+        {footer && <div className="modal-action mt-0 border-t border-base-300 px-5 py-4">{footer}</div>}
       </div>
-      <div className="modal-backdrop show" />
-    </>,
+    </div>,
     document.body,
   );
 }

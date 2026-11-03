@@ -18,21 +18,21 @@ export default function Login() {
     try { await login(email, password); } catch (err) { setError(err.message); setBusy(false); }
   };
   return (
-    <div className="container" style={{ maxWidth: 420 }}>
-      <div className="card shadow-sm" style={{ marginTop: '12vh' }}>
-        <div className="card-body p-4">
-          <h1 className="h4 text-center mb-4">🏪 Che's Tindahan</h1>
-          {(error || message) && <div className="alert alert-danger" role="alert">{error || message}</div>}
+    <div className="mx-auto w-full max-w-md px-4">
+      <div className="card mt-[12vh] border border-base-300 bg-base-100 shadow-sm">
+        <div className="card-body p-6">
+          <h1 className="mb-4 text-center text-2xl font-bold">🏪 Che's Tindahan</h1>
+          {(error || message) && <div className="alert alert-error" role="alert">{error || message}</div>}
           <form onSubmit={submit}>
             <div className="mb-3">
-              <label className="form-label" htmlFor="email">Email</label>
-              <input id="email" type="email" className="form-control" autoComplete="username" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
+              <label className="mb-1 block text-sm font-medium" htmlFor="email">Email</label>
+              <input id="email" type="email" className="input input-bordered w-full" autoComplete="username" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="mb-3">
-              <label className="form-label" htmlFor="password">Password</label>
-              <input id="password" type="password" className="form-control" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <label className="mb-1 block text-sm font-medium" htmlFor="password">Password</label>
+              <input id="password" type="password" className="input input-bordered w-full" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <button className="btn btn-primary w-100" disabled={busy}>{busy && <Spin />}Log in</button>
+            <button className="btn btn-primary w-full" disabled={busy}>{busy && <Spin />}Log in</button>
           </form>
         </div>
       </div>

@@ -10,8 +10,8 @@ import { Empty, ErrorAlert, FieldError, Loading, Spin } from '../components/Ui.j
 // Defined at module level on purpose: a component defined INSIDE another component gets a new identity on every
 // render, which makes React remount its inputs and drop keyboard focus after each keystroke.
 const Field = ({ id, label, hint, error, children }) => (
-  <div className="mb-3"><label className="form-label" htmlFor={id}>{label}</label>{children}
-    {hint && !error && <div className="form-text">{hint}</div>}<FieldError msg={error} /></div>
+  <div className="mb-3"><label className="label-text block font-medium" htmlFor={id}>{label}</label>{children}
+    {hint && !error && <div className="text-sm text-base-content/60">{hint}</div>}<FieldError msg={error} /></div>
 );
 
 const FIELD_MAP = { price_centavos: 'price', cost_centavos: 'cost', initial_stock: 'stock' };
@@ -63,24 +63,24 @@ function ProductForm({ product, onSaved, onClose }) {
       setBusy(false);
     }
   };
-  const cls = (k) => `form-control ${errors[k] ? 'is-invalid' : ''}`;
+  const cls = (k) => `input input-bordered w-full ${errors[k] ? 'input-error' : ''}`;
   return (
     <Modal title={isNew ? 'Add product' : 'Edit product'} onClose={onClose}
-      footer={<><button className="btn btn-outline-secondary" onClick={onClose} disabled={busy}>Cancel</button>
+      footer={<><button className="btn btn-outline btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
         <button className="btn btn-primary" form="product-form" disabled={busy}>{busy && <Spin />}Save</button></>}>
       <form id="product-form" onSubmit={submit} noValidate>
-        {formError && <div className="alert alert-danger">{formError}</div>}
+        {formError && <div className="alert alert-error">{formError}</div>}
         <Field id="name" error={errors.name} label="Product name"><input id="name" className={cls('name')} value={f.name} onChange={set('name')} /></Field>
         <Field id="barcode" error={errors.barcode} label="Barcode / SKU (optional)"><input id="barcode" className={cls('barcode')} value={f.barcode} onChange={set('barcode')} /></Field>
-        <div className="row">
-          <div className="col"><Field id="price" error={errors.price} label="Selling price (₱)"><input id="price" inputMode="decimal" className={cls('price')} value={f.price} onChange={set('price')} /></Field></div>
-          <div className="col"><Field id="cost" error={errors.cost} label="Cost price (₱)"><input id="cost" inputMode="decimal" className={cls('cost')} value={f.cost} onChange={set('cost')} /></Field></div>
+        <div className="grid grid-cols-12 gap-3">
+          <div className="col-span-12 sm:col-span-6"><Field id="price" error={errors.price} label="Selling price (₱)"><input id="price" inputMode="decimal" className={cls('price')} value={f.price} onChange={set('price')} /></Field></div>
+          <div className="col-span-12 sm:col-span-6"><Field id="cost" error={errors.cost} label="Cost price (₱)"><input id="cost" inputMode="decimal" className={cls('cost')} value={f.cost} onChange={set('cost')} /></Field></div>
         </div>
-        <div className="row">
-          {isNew && <div className="col"><Field id="stock" error={errors.stock} label="Starting stock"><input id="stock" inputMode="numeric" className={cls('stock')} value={f.stock} onChange={set('stock')} /></Field></div>}
-          <div className="col"><Field id="threshold" error={errors.threshold} label="Low-stock warning at" hint="Warn when stock is this number or lower."><input id="threshold" inputMode="numeric" className={cls('threshold')} value={f.threshold} onChange={set('threshold')} /></Field></div>
+        <div className="grid grid-cols-12 gap-3">
+          {isNew && <div className="col-span-12 sm:col-span-6"><Field id="stock" error={errors.stock} label="Starting stock"><input id="stock" inputMode="numeric" className={cls('stock')} value={f.stock} onChange={set('stock')} /></Field></div>}
+          <div className="col-span-12 sm:col-span-6"><Field id="threshold" error={errors.threshold} label="Low-stock warning at" hint="Warn when stock is this number or lower."><input id="threshold" inputMode="numeric" className={cls('threshold')} value={f.threshold} onChange={set('threshold')} /></Field></div>
         </div>
-        {!isNew && <div className="form-text">To change the amount in stock, use the Inventory page so the change is recorded.</div>}
+        {!isNew && <div className="text-sm text-base-content/60">To change the amount in stock, use the Inventory page so the change is recorded.</div>}
       </form>
     </Modal>
   );
@@ -108,31 +108,31 @@ export default function Products() {
   const rows = list.data?.data ?? [];
   return (
     <>
-      <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-        <h1 className="page-title mb-0">Products</h1>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="mb-0 text-2xl font-bold">Products</h1>
         {isOwner && <button className="btn btn-primary" onClick={() => setEditing('new')}>+ Add product</button>}
       </div>
-      <div className="row g-2 mb-3">
-        <div className="col-md-6"><input className="form-control" placeholder="Search by name or barcode…" aria-label="Search products" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
-        {isOwner && <div className="col-md-3"><select className="form-select" aria-label="Show" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+      <div className="grid grid-cols-12 gap-2 mb-3">
+        <div className="col-span-12 md:col-span-6"><input className="input input-bordered w-full" placeholder="Search by name or barcode…" aria-label="Search products" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+        {isOwner && <div className="col-span-12 md:col-span-3"><select className="select select-bordered w-full" aria-label="Show" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="active">Active products</option><option value="archived">Archived products</option><option value="all">All products</option></select></div>}
       </div>
       <ErrorAlert error={list.error} onRetry={list.reload} />
-      <div className="card shadow-sm">
-        <div className="table-responsive">
-          <table className="table table-hover mb-0">
-            <thead><tr><th>Product</th><th>Barcode / SKU</th><th className="text-end">Price</th>{isOwner && <th className="text-end">Cost</th>}<th className="text-end">In stock</th>{isOwner && <th>Status</th>}{isOwner && <th />}</tr></thead>
+      <div className="card border border-base-300 bg-base-100 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="table mb-0">
+            <thead><tr><th>Product</th><th>Barcode / SKU</th><th className="text-right">Price</th>{isOwner && <th className="text-right">Cost</th>}<th className="text-right">In stock</th>{isOwner && <th>Status</th>}{isOwner && <th />}</tr></thead>
             <tbody>
               {rows.map((p) => (
-                <tr key={p.id} className={p.is_active ? '' : 'text-muted'}>
+                <tr key={p.id} className={p.is_active ? '' : 'text-base-content/50'}>
                   <td>{p.name}</td><td>{p.barcode ?? '—'}</td>
                   <td className="money">{pesos(p.price_centavos)}</td>
                   {isOwner && <td className="money">{p.cost_centavos != null ? pesos(p.cost_centavos) : '—'}</td>}
-                  <td className="money">{p.stock_qty} {p.is_active && p.stock_qty <= p.low_stock_threshold && <span className="badge bg-warning text-dark ms-1">{p.stock_qty === 0 ? 'Out' : 'Low'}</span>}</td>
-                  {isOwner && <td>{p.is_active ? <span className="badge bg-success">Active</span> : <span className="badge bg-secondary">Archived</span>}</td>}
-                  {isOwner && <td className="text-end text-nowrap">
-                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => setEditing(p)}>Edit</button>
-                    <button className="btn btn-sm btn-outline-secondary" onClick={() => { setActionError(null); setArchiving(p); }}>{p.is_active ? 'Archive' : 'Restore'}</button>
+                  <td className="money">{p.stock_qty} {p.is_active && p.stock_qty <= p.low_stock_threshold && <span className="badge badge-warning ms-1">{p.stock_qty === 0 ? 'Out' : 'Low'}</span>}</td>
+                  {isOwner && <td>{p.is_active ? <span className="badge badge-success">Active</span> : <span className="badge badge-neutral">Archived</span>}</td>}
+                  {isOwner && <td className="text-right whitespace-nowrap">
+                    <button className="btn btn-sm btn-outline btn-primary me-1" onClick={() => setEditing(p)}>Edit</button>
+                    <button className="btn btn-sm btn-outline btn-secondary" onClick={() => { setActionError(null); setArchiving(p); }}>{p.is_active ? 'Archive' : 'Restore'}</button>
                   </td>}
                 </tr>
               ))}
@@ -141,14 +141,14 @@ export default function Products() {
         </div>
         {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>{q ? 'No products match your search.' : 'No products yet.'}</Empty>}
-        <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
+        <div className="border-t border-base-300 px-4 py-3"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
       </div>
       {editing && <ProductForm product={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); list.reload(); }} />}
       {archiving && (
         <Modal title={archiving.is_active ? 'Archive product?' : 'Restore product?'} onClose={() => setArchiving(null)}
-          footer={<><button className="btn btn-outline-secondary" onClick={() => setArchiving(null)} disabled={archiveBusy}>Cancel</button>
+          footer={<><button className="btn btn-outline btn-secondary" onClick={() => setArchiving(null)} disabled={archiveBusy}>Cancel</button>
             <button className={`btn ${archiving.is_active ? 'btn-warning' : 'btn-primary'}`} onClick={toggleArchive} disabled={archiveBusy}>{archiveBusy && <Spin />}{archiving.is_active ? 'Archive' : 'Restore'}</button></>}>
-          {actionError && <div className="alert alert-danger">{actionError}</div>}
+          {actionError && <div className="alert alert-error">{actionError}</div>}
           <p className="mb-0">{archiving.is_active
             ? <>“{archiving.name}” will no longer appear at the checkout. Past sales and receipts are not changed, and you can restore it any time.</>
             : <>“{archiving.name}” will appear at the checkout again.</>}</p>

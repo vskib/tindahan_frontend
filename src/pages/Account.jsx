@@ -20,11 +20,11 @@ function ChangePassword() {
     else { setMsg({ kind: 'success', text: 'Password changed.' }); setPw(''); setPw2(''); }
   };
   return (
-    <div className="card shadow-sm mb-3"><div className="card-header"><strong>Change password</strong></div>
+    <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm"><div className="border-b border-base-300 px-4 py-3"><strong>Change password</strong></div>
       <form className="card-body" onSubmit={submit}>
-        {msg && <div className={`alert alert-${msg.kind}`}>{msg.text}</div>}
-        <div className="mb-2"><label className="form-label" htmlFor="pw">New password</label><input id="pw" type="password" autoComplete="new-password" className="form-control" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
-        <div className="mb-3"><label className="form-label" htmlFor="pw2">Repeat new password</label><input id="pw2" type="password" autoComplete="new-password" className="form-control" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
+        {msg && <div className={`alert alert-${msg.kind === 'danger' ? 'error' : msg.kind}`}>{msg.text}</div>}
+        <div className="mb-2"><label className="label-text block font-medium" htmlFor="pw">New password</label><input id="pw" type="password" autoComplete="new-password" className="input input-bordered w-full" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
+        <div className="mb-3"><label className="label-text block font-medium" htmlFor="pw2">Repeat new password</label><input id="pw2" type="password" autoComplete="new-password" className="input input-bordered w-full" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
         <button className="btn btn-primary" disabled={busy}>{busy && <Spin />}Change password</button>
       </form></div>
   );
@@ -43,13 +43,13 @@ function AddCashier({ onClose, onSaved }) {
   };
   return (
     <Modal title="Add cashier account" onClose={onClose}
-      footer={<><button className="btn btn-outline-secondary" onClick={onClose} disabled={busy}>Cancel</button><button className="btn btn-primary" form="cashier-form" disabled={busy}>{busy && <Spin />}Create account</button></>}>
+      footer={<><button className="btn btn-outline btn-secondary" onClick={onClose} disabled={busy}>Cancel</button><button className="btn btn-primary" form="cashier-form" disabled={busy}>{busy && <Spin />}Create account</button></>}>
       <form id="cashier-form" onSubmit={submit}>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <div className="mb-3"><label className="form-label" htmlFor="cn">Full name</label><input id="cn" className="form-control" required value={f.full_name} onChange={set('full_name')} /></div>
-        <div className="mb-3"><label className="form-label" htmlFor="ce">Email (used to log in)</label><input id="ce" type="email" className="form-control" required value={f.email} onChange={set('email')} /></div>
-        <div className="mb-1"><label className="form-label" htmlFor="cp">Starting password</label><input id="cp" type="text" autoComplete="off" className="form-control" required minLength={10} value={f.password} onChange={set('password')} />
-          <div className="form-text">At least 10 characters. Give it to the cashier privately; they can change it under Account.</div></div>
+        {error && <div className="alert alert-error">{error}</div>}
+        <div className="mb-3"><label className="label-text block font-medium" htmlFor="cn">Full name</label><input id="cn" className="input input-bordered w-full" required value={f.full_name} onChange={set('full_name')} /></div>
+        <div className="mb-3"><label className="label-text block font-medium" htmlFor="ce">Email (used to log in)</label><input id="ce" type="email" className="input input-bordered w-full" required value={f.email} onChange={set('email')} /></div>
+        <div className="mb-1"><label className="label-text block font-medium" htmlFor="cp">Starting password</label><input id="cp" type="text" autoComplete="off" className="input input-bordered w-full" required minLength={10} value={f.password} onChange={set('password')} />
+          <div className="text-sm text-base-content/60">At least 10 characters. Give it to the cashier privately; they can change it under Account.</div></div>
       </form>
     </Modal>
   );
@@ -67,17 +67,17 @@ function Staff({ myId }) {
     catch (e) { setError(e.message); } finally { setBusyId(null); }
   };
   return (
-    <div className="card shadow-sm mb-3">
-      <div className="card-header d-flex justify-content-between align-items-center"><strong>Staff accounts</strong><button className="btn btn-sm btn-primary" onClick={() => setAdding(true)}>+ Add cashier</button></div>
+    <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">
+      <div className="flex items-center justify-between border-b border-base-300 px-4 py-3"><strong>Staff accounts</strong><button className="btn btn-sm btn-primary" onClick={() => setAdding(true)}>+ Add cashier</button></div>
       <div className="card-body p-0">
-        {error && <div className="alert alert-danger m-3">{error}</div>}
+        {error && <div className="alert alert-error m-3">{error}</div>}
         <ErrorAlert error={users.error} onRetry={users.reload} />
         {users.loading && !users.data && <Loading variant="table" />}
-        <div className="table-responsive"><table className="table mb-0"><tbody>
+        <div className="overflow-x-auto"><table className="table mb-0"><tbody>
           {users.data?.data.map((u) => (
-            <tr key={u.id}><td>{u.full_name}<div className="text-muted small">{u.email}</div></td><td>{u.role === 'owner' ? 'Owner' : 'Cashier'}</td>
-              <td>{u.is_active ? <span className="badge bg-success">Active</span> : <span className="badge bg-secondary">Disabled</span>}</td>
-              <td className="text-end">{u.id !== myId && <button className="btn btn-sm btn-outline-secondary" disabled={busyId === u.id} onClick={() => toggle(u)}>{u.is_active ? 'Disable' : 'Enable'}</button>}</td></tr>))}
+            <tr key={u.id}><td>{u.full_name}<div className="text-base-content/60 text-sm">{u.email}</div></td><td>{u.role === 'owner' ? 'Owner' : 'Cashier'}</td>
+              <td>{u.is_active ? <span className="badge badge-success">Active</span> : <span className="badge badge-neutral">Disabled</span>}</td>
+              <td className="text-right">{u.id !== myId && <button className="btn btn-sm btn-outline btn-secondary" disabled={busyId === u.id} onClick={() => toggle(u)}>{u.is_active ? 'Disable' : 'Enable'}</button>}</td></tr>))}
         </tbody></table></div>
       </div>
       {adding && <AddCashier onClose={() => setAdding(false)} onSaved={() => { setAdding(false); users.reload(); }} />}
@@ -88,13 +88,13 @@ function Staff({ myId }) {
 export default function Account() {
   const { profile, email, logout, isOwner } = useAuth();
   return (
-    <div style={{ maxWidth: 760 }}>
-      <h1 className="page-title">Account</h1>
-      <div className="card shadow-sm mb-3"><div className="card-body">
-        <div className="fs-5 fw-semibold">{profile.full_name}</div>
-        <div className="text-muted">{email}</div>
+    <div className="max-w-3xl">
+      <h1 className="mb-4 text-2xl font-bold">Account</h1>
+      <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm"><div className="card-body">
+        <div className="text-xl font-semibold">{profile.full_name}</div>
+        <div className="text-base-content/60">{email}</div>
         <div className="mb-3">{isOwner ? 'Owner' : 'Cashier'} · {profile.store_name}</div>
-        <button className="btn btn-outline-danger" onClick={logout}>Log out</button>
+        <button className="btn btn-outline btn-error" onClick={logout}>Log out</button>
       </div></div>
       <ChangePassword />
       {isOwner && <Staff myId={profile.id} />}

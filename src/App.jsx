@@ -13,11 +13,11 @@ import Account from './pages/Account.jsx';
 
 function RequireAuth() {
   const { status, message, retry } = useAuth();
-  if (status === 'loading') return <div className="container py-5"><Loading text="Starting…" variant="detail" /></div>;
+  if (status === 'loading') return <div className="mx-auto w-full px-4 py-5"><Loading text="Starting…" variant="detail" /></div>;
   if (status === 'anon') return <Navigate to="/login" replace />;
   if (status === 'error') return (
-    <div className="container py-5 text-center">
-      <div className="alert alert-danger d-inline-block">{message}</div>
+    <div className="mx-auto w-full px-4 py-5 text-center">
+      <div className="alert alert-error inline-block">{message}</div>
       <div><button className="btn btn-primary" onClick={retry}>Try again</button></div>
     </div>
   );
@@ -31,7 +31,7 @@ function RequireOwner() {
 const Home = () => (useAuth().isOwner ? <Dashboard /> : <Navigate to="/pos" replace />);
 
 export default function App() {
-  if (configError) return <div className="container py-5"><div className="alert alert-danger"><strong>Setup incomplete.</strong> {configError}</div></div>;
+  if (configError) return <div className="mx-auto w-full px-4 py-5"><div className="alert alert-error"><strong>Setup incomplete.</strong> {configError}</div></div>;
   return (
     <HashRouter>
       <AuthProvider>

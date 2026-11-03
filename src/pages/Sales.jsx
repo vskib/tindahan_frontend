@@ -20,7 +20,7 @@ function SaleDetail({ id, onClose }) {
   const receipt = sale ? { ...sale, cashier_name: sale.cashier?.full_name } : null;
   return (
     <Modal title="Sale details" onClose={onClose}
-      footer={<><button className="btn btn-outline-secondary" onClick={() => window.print()} disabled={!receipt}>🖨 Print copy</button>
+      footer={<><button className="btn btn-outline btn-secondary" onClick={() => window.print()} disabled={!receipt}>🖨 Print copy</button>
         <button className="btn btn-primary" onClick={onClose}>Close</button></>}>
       {d.loading && !receipt && <Loading variant="detail" />}
       <ErrorAlert error={d.error} onRetry={d.reload} />
@@ -123,38 +123,38 @@ export default function Sales() {
   const averageSale = reportTotals.txn_count > 0 ? reportTotals.total_centavos / reportTotals.txn_count : 0;
   return (
     <>
-      <h1 className="page-title">Sales history</h1>
-      <div className="row g-2 align-items-end mb-3">
-        <div className="col-auto"><label className="form-label mb-0 small" htmlFor="from">From</label><input id="from" type="date" className="form-control" value={from} max={today} onChange={(e) => setRange(e.target.value, to)} /></div>
-        <div className="col-auto"><label className="form-label mb-0 small" htmlFor="to">To</label><input id="to" type="date" className="form-control" value={to} max={today} onChange={(e) => setRange(from, e.target.value)} /></div>
-        <div className="col-auto d-flex gap-1">
-          <button className="btn btn-outline-secondary" onClick={() => setRange(today, today)}>Today</button>
-          <button className="btn btn-outline-secondary" onClick={() => setRange(addDays(today, -1), addDays(today, -1))}>Yesterday</button>
-          <button className="btn btn-outline-secondary" onClick={() => setRange(addDays(today, -6), today)}>Last 7 days</button>
-          <button className="btn btn-outline-secondary" onClick={setCurrentWeek}>This week</button>
-          <button className="btn btn-outline-secondary" onClick={setCurrentMonth}>This month</button>
+      <h1 className="mb-4 text-2xl font-bold">Sales history</h1>
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <div className="flex flex-col"><label className="mb-1 text-sm font-medium" htmlFor="from">From</label><input id="from" type="date" className="input input-bordered" value={from} max={today} onChange={(e) => setRange(e.target.value, to)} /></div>
+        <div className="flex flex-col"><label className="mb-1 text-sm font-medium" htmlFor="to">To</label><input id="to" type="date" className="input input-bordered" value={to} max={today} onChange={(e) => setRange(from, e.target.value)} /></div>
+        <div className="flex flex-wrap gap-1">
+          <button className="btn btn-outline btn-secondary" onClick={() => setRange(today, today)}>Today</button>
+          <button className="btn btn-outline btn-secondary" onClick={() => setRange(addDays(today, -1), addDays(today, -1))}>Yesterday</button>
+          <button className="btn btn-outline btn-secondary" onClick={() => setRange(addDays(today, -6), today)}>Last 7 days</button>
+          <button className="btn btn-outline btn-secondary" onClick={setCurrentWeek}>This week</button>
+          <button className="btn btn-outline btn-secondary" onClick={setCurrentMonth}>This month</button>
         </div>
       </div>
       {rangeError && <div className="alert alert-warning">{rangeError}</div>}
       <ErrorAlert error={list.error ?? days.error ?? report.error} onRetry={() => { list.reload(); days.reload(); report.reload(); }} />
 
       {isOwner && (
-      <div className="card shadow-sm mb-3">
-        <div className="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+      <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-4 py-3">
           <strong>{period === 'week' ? 'Weekly sales report' : 'Monthly sales report'}</strong>
-          <div className="d-flex gap-2 align-items-center">
-            <label className="visually-hidden" htmlFor="report-period">Report period</label>
-            <select id="report-period" className="form-select form-select-sm w-auto" value={period} onChange={(e) => setPeriod(e.target.value)}>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="sr-only" htmlFor="report-period">Report period</label>
+            <select id="report-period" className="select select-bordered select-sm w-auto" value={period} onChange={(e) => setPeriod(e.target.value)}>
               <option value="week">Weekly</option>
               <option value="month">Monthly</option>
             </select>
             <button className="btn btn-sm btn-primary" onClick={generateReport} disabled={Boolean(rangeError) || report.loading}>Generate summary of sales</button>
-            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || (!reportRows.length && !inventory)}>Download CSV</button>
+            <button className="btn btn-sm btn-outline btn-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || (!reportRows.length && !inventory)}>Download CSV</button>
           </div>
         </div>
         {report.loading && reportRequested ? <Loading variant="table" /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
-          <div className="table-responsive"><table className="table table-sm mb-0">
-            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Units sold</th><th className="text-end">Total sales</th><th className="text-end">Profit</th><th className="text-end">Average sale</th></tr></thead>
+          <div className="overflow-x-auto"><table className="table table-xs mb-0">
+            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-right">Transactions</th><th className="text-right">Units sold</th><th className="text-right">Total sales</th><th className="text-right">Profit</th><th className="text-right">Average sale</th></tr></thead>
             <tbody>{reportRows.map((r) => {
               const total = Number(r.total_centavos);
               const profit = Number(r.profit_centavos ?? 0);
@@ -164,39 +164,39 @@ export default function Sales() {
                   <td>{period === 'week' ? r.period_start : r.period_start.slice(0, 7)}</td>
                   <td className="money">{r.txn_count}</td>
                   <td className="money">{r.qty_sold ?? 0}</td>
-                  <td className="money fw-semibold">{pesos(total)}</td>
-                  <td className={`money fw-semibold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{pesos(profit)}</td>
+                  <td className="money font-semibold">{pesos(total)}</td>
+                  <td className={`money font-semibold ${profit >= 0 ? 'text-success' : 'text-error'}`}>{pesos(profit)}</td>
                   <td className="money">{pesos(average)}</td>
                 </tr>
               );
             })}</tbody>
           </table>
-          <div className="card-footer small text-muted border-0">
+          <div className="px-4 py-3 text-sm text-base-content/60">
             {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)} · Profit {pesos(reportTotals.profit_centavos)} · Average {pesos(averageSale)}
           </div>
           </div>
         )}
-        {!isOwner && <div className="card-footer small text-muted">This report includes only the sales you rang up.</div>}
+        {!isOwner && <div className="border-t border-base-300 px-4 py-3 text-sm text-base-content/60">This report includes only the sales you rang up.</div>}
       </div>
      )}
 
       {isOwner && reportRequested && !report.loading && !report.error && inventory && (
-        <div className="card shadow-sm mb-3">
-          <div className="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+        <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-4 py-3">
             <strong>Inventory snapshot</strong>
-            <span className="badge bg-primary">{inventory.current_units} total units currently in inventory</span>
+            <span className="badge badge-primary">{inventory.current_units} total units currently in inventory</span>
           </div>
           <div className="card-body pb-0">
-            <p className="small text-muted">Starting inventory is the stock at the beginning of {inventory.starting_date}. Ending inventory is the stock at the end of {inventory.ending_date}. Current inventory is the live stock when this report was generated.</p>
-            <div className="row g-2 mb-3">
-              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Starting inventory · {inventory.starting_date}</div><strong className="fs-5">{inventory.starting_units} units</strong></div></div>
-              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Ending inventory · {inventory.ending_date}</div><strong className="fs-5">{inventory.ending_units} units</strong></div></div>
-              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Total units currently in inventory</div><strong className="fs-5">{inventory.current_units} units</strong></div></div>
+            <p className="text-sm text-base-content/60">Starting inventory is the stock at the beginning of {inventory.starting_date}. Ending inventory is the stock at the end of {inventory.ending_date}. Current inventory is the live stock when this report was generated.</p>
+            <div className="grid grid-cols-12 gap-2 mb-3">
+              <div className="col-span-6 md:col-span-4"><div className="border border-base-300 rounded-md p-3 h-full"><div className="text-sm text-base-content/60">Starting inventory · {inventory.starting_date}</div><strong className="text-xl">{inventory.starting_units} units</strong></div></div>
+              <div className="col-span-6 md:col-span-4"><div className="border border-base-300 rounded-md p-3 h-full"><div className="text-sm text-base-content/60">Ending inventory · {inventory.ending_date}</div><strong className="text-xl">{inventory.ending_units} units</strong></div></div>
+              <div className="col-span-6 md:col-span-4"><div className="border border-base-300 rounded-md p-3 h-full"><div className="text-sm text-base-content/60">Total units currently in inventory</div><strong className="text-xl">{inventory.current_units} units</strong></div></div>
             </div>
           </div>
-          <div className="table-responsive">
-            <table className="table table-sm table-hover mb-0">
-              <thead><tr><th>Product</th><th>Status</th><th className="text-end">Starting stock</th><th className="text-end">Ending stock</th><th className="text-end">Change</th><th className="text-end">Current stock</th></tr></thead>
+          <div className="overflow-x-auto">
+            <table className="table table-xs mb-0">
+              <thead><tr><th>Product</th><th>Status</th><th className="text-right">Starting stock</th><th className="text-right">Ending stock</th><th className="text-right">Change</th><th className="text-right">Current stock</th></tr></thead>
               <tbody>{inventory.products.map((product) => {
                 const change = product.ending_qty - product.starting_qty;
                 return (
@@ -205,8 +205,8 @@ export default function Sales() {
                     <td>{product.is_active ? 'Active' : 'Archived'}</td>
                     <td className="money">{product.starting_qty}</td>
                     <td className="money">{product.ending_qty}</td>
-                    <td className={`money ${change < 0 ? 'text-danger' : change > 0 ? 'text-success' : ''}`}>{change > 0 ? '+' : ''}{change}</td>
-                    <td className="money fw-semibold">{product.current_qty}</td>
+                    <td className={`money ${change < 0 ? 'text-error' : change > 0 ? 'text-success' : ''}`}>{change > 0 ? '+' : ''}{change}</td>
+                    <td className="money font-semibold">{product.current_qty}</td>
                   </tr>
                 );
               })}</tbody>
@@ -217,28 +217,28 @@ export default function Sales() {
       )}
 
       {isOwner && dayRows.length > 0 && (
-        <div className="card shadow-sm mb-3">
-          <div className="card-header d-flex justify-content-between"><strong>Daily sales</strong><span>{grandCount} sale(s) · <strong>{pesos(grand)}</strong></span></div>
-          <table className="table table-sm mb-0"><thead><tr><th>Day</th><th className="text-end">Transactions</th><th className="text-end">Total sales</th></tr></thead>
+        <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">
+          <div className="flex items-center justify-between border-b border-base-300 px-4 py-3"><strong>Daily sales</strong><span>{grandCount} sale(s) · <strong>{pesos(grand)}</strong></span></div>
+          <table className="table table-xs mb-0"><thead><tr><th>Day</th><th className="text-right">Transactions</th><th className="text-right">Total sales</th></tr></thead>
             <tbody>{dayRows.map((r) => <tr key={r.day}><td>{r.day}</td><td className="money">{r.txn_count}</td><td className="money">{pesos(Number(r.total_centavos))}</td></tr>)}</tbody></table>
         </div>
       )}
 
-      <div className="card shadow-sm">
-        <div className="table-responsive">
-          <table className="table table-hover mb-0">
-            <thead><tr><th>Transaction no.</th><th>Date &amp; time</th><th>Cashier</th><th className="text-end">Total</th><th className="text-end">Cash</th><th className="text-end">Change</th><th /></tr></thead>
+      <div className="card border border-base-300 bg-base-100 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="table mb-0">
+            <thead><tr><th>Transaction no.</th><th>Date &amp; time</th><th>Cashier</th><th className="text-right">Total</th><th className="text-right">Cash</th><th className="text-right">Change</th><th /></tr></thead>
             <tbody>{rows.map((s) => (
-              <tr key={s.id}><td className="text-nowrap">{s.txn_no}</td><td className="text-nowrap">{formatDateTime(s.created_at)}</td><td>{s.cashier?.full_name}</td>
-                <td className="money fw-semibold">{pesos(s.total_centavos)}</td><td className="money">{pesos(s.cash_received_centavos)}</td><td className="money">{pesos(s.change_centavos)}</td>
-                <td className="text-end"><button className="btn btn-sm btn-outline-primary" onClick={() => setViewing(s.id)}>View</button></td></tr>))}</tbody>
+              <tr key={s.id}><td className="whitespace-nowrap">{s.txn_no}</td><td className="whitespace-nowrap">{formatDateTime(s.created_at)}</td><td>{s.cashier?.full_name}</td>
+                <td className="money font-semibold">{pesos(s.total_centavos)}</td><td className="money">{pesos(s.cash_received_centavos)}</td><td className="money">{pesos(s.change_centavos)}</td>
+                <td className="text-right"><button className="btn btn-sm btn-outline btn-primary" onClick={() => setViewing(s.id)}>View</button></td></tr>))}</tbody>
           </table>
         </div>
         {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>No sales in this period.</Empty>}
-        <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
+        <div className="flex items-center gap-2 border-t border-base-300 bg-base-100 px-4 py-3"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
       </div>
-      {!isOwner && <p className="text-muted small mt-2">You can see the sales you rang up.</p>}
+      {!isOwner && <p className="text-base-content/60 text-sm mt-2">You can see the sales you rang up.</p>}
       {viewing && <SaleDetail id={viewing} onClose={() => setViewing(null)} />}
     </>
   );

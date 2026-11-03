@@ -5,7 +5,7 @@ import { formatDateTime } from '../lib/format.js';
 export default function Receipt({ receipt, copy = false }) {
   return (
     <div className="receipt receipt-print" data-testid="receipt">
-      <div className="text-center fw-bold" style={{ fontSize: 16 }}>{receipt.store_name}</div>
+      <div className="text-center font-bold" style={{ fontSize: 16 }}>{receipt.store_name}</div>
       <div className="text-center">Sales receipt{copy ? ' (copy)' : ''}</div>
       <div className="sep" />
       <div>No: {receipt.txn_no}</div>
@@ -26,7 +26,7 @@ export default function Receipt({ receipt, copy = false }) {
         </tbody>
       </table>
       <div className="sep" />
-      <div className="row-split fw-bold"><span>TOTAL</span><span>{pesos(receipt.total_centavos)}</span></div>
+      <div className="row-split font-bold"><span>TOTAL</span><span>{pesos(receipt.total_centavos)}</span></div>
       <div className="row-split"><span>Cash</span><span>{pesos(receipt.cash_received_centavos)}</span></div>
       <div className="row-split"><span>Change</span><span>{pesos(receipt.change_centavos)}</span></div>
       <div className="sep" />

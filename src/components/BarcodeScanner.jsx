@@ -72,10 +72,10 @@ export default function BarcodeScanner({ onClose, onScan }) {
   return (
     <Modal title="Scan product barcode" onClose={onClose}
       footer={<button className="btn btn-primary" onClick={onClose}>Close</button>}>
-      <p className="text-muted">Point the rear camera at a product barcode.</p>
+      <p className="text-base-content/60">Point the rear camera at a product barcode.</p>
       {starting && !error && <Loading text="Starting camera…" />}
-      <video ref={videoRef} className="w-100 rounded bg-dark" style={{ maxHeight: '60vh', objectFit: 'cover' }} aria-label="Camera barcode preview" />
-      {error && <div className="alert alert-danger mt-3 mb-0" role="alert">{error}</div>}
+      <video ref={videoRef} className="w-full rounded-md bg-neutral" style={{ maxHeight: '60vh', objectFit: 'cover' }} aria-label="Camera barcode preview" />
+      {error && <div className="alert alert-error mt-3 mb-0" role="alert">{error}</div>}
     </Modal>
   );
 }
