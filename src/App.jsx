@@ -13,7 +13,7 @@ import Account from './pages/Account.jsx';
 
 function RequireAuth() {
   const { status, message, retry } = useAuth();
-  if (status === 'loading') return <div className="container py-5"><Loading text="Starting…" /></div>;
+  if (status === 'loading') return <div className="container py-5"><Loading text="Starting…" variant="detail" /></div>;
   if (status === 'anon') return <Navigate to="/login" replace />;
   if (status === 'error') return (
     <div className="container py-5 text-center">

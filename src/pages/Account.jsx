@@ -72,7 +72,7 @@ function Staff({ myId }) {
       <div className="card-body p-0">
         {error && <div className="alert alert-danger m-3">{error}</div>}
         <ErrorAlert error={users.error} onRetry={users.reload} />
-        {users.loading && !users.data && <Loading />}
+        {users.loading && !users.data && <Loading variant="table" />}
         <div className="table-responsive"><table className="table mb-0"><tbody>
           {users.data?.data.map((u) => (
             <tr key={u.id}><td>{u.full_name}<div className="text-muted small">{u.email}</div></td><td>{u.role === 'owner' ? 'Owner' : 'Cashier'}</td>

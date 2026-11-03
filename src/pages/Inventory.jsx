@@ -51,7 +51,7 @@ function AdjustModal({ product, onClose, onSaved }) {
     <Modal title={`Adjust stock: ${product.name}`} onClose={onClose}
       footer={<><button className="btn btn-outline-secondary" onClick={onClose} disabled={busy}>Cancel</button>
         <button className="btn btn-primary" onClick={save} disabled={!canSave}>{busy && <Spin />}Save</button></>}>
-      {fresh.loading && !fresh.data ? <Loading /> : <ErrorAlert error={fresh.error} onRetry={fresh.reload} />}
+      {fresh.loading && !fresh.data ? <Loading variant="detail" /> : <ErrorAlert error={fresh.error} onRetry={fresh.reload} />}
       {current !== null && <p>Currently in stock: <strong>{current}</strong></p>}
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="mb-3"><label className="form-label" htmlFor="reason">Reason</label>
@@ -100,7 +100,7 @@ function StockTab() {
               <td className="money">{p.stock_qty} {p.stock_qty <= p.low_stock_threshold && <span className="badge bg-warning text-dark ms-1">{p.stock_qty === 0 ? 'Out' : 'Low'}</span>}</td>
               <td className="money">{p.low_stock_threshold}</td>
               <td className="text-end"><button className="btn btn-sm btn-primary" onClick={() => setAdjusting(p)}>Add / adjust stock</button></td></tr>))}</tbody></table></div>
-        {list.loading && !list.data && <Loading />}
+        {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>No products found.</Empty>}
         <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div></div>
       {adjusting && <AdjustModal product={adjusting} onClose={() => setAdjusting(null)} onSaved={done} />}
@@ -122,7 +122,7 @@ function HistoryTab() {
             <tr key={m.id}><td className="text-nowrap">{formatDateTime(m.created_at)}</td><td>{m.product?.name}</td>
               <td className={`money fw-semibold ${m.delta > 0 ? 'text-success' : 'text-danger'}`}>{m.delta > 0 ? '+' : ''}{m.delta}</td>
               <td className="money">{m.qty_after}</td><td>{REASONS[m.reason] ?? m.reason}</td><td>{m.note ?? ''}</td><td>{m.user?.full_name}</td></tr>))}</tbody></table></div>
-        {list.loading && !list.data && <Loading />}
+        {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>No stock movements yet.</Empty>}
         <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div></div>
     </>

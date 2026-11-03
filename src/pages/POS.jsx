@@ -130,7 +130,7 @@ export default function POS() {
           <button className="btn btn-outline-primary" type="button" disabled={locked} onClick={() => setScannerOpen(true)}>Scan barcode</button>
         </div>
         <ErrorAlert error={products.error} onRetry={products.reload} />
-        {products.loading && !products.data && <Loading />}
+        {products.loading && !products.data && <Loading variant="grid" />}
         {products.data && list.length === 0 && <Empty>No products found.</Empty>}
         <div className="row g-2">
           {list.map((p) => (

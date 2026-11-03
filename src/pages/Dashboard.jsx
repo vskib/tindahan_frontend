@@ -20,7 +20,7 @@ export default function Dashboard() {
         <button className="btn btn-outline-secondary btn-sm" onClick={d.reload} disabled={d.loading}>↻ Refresh</button>
       </div>
       <ErrorAlert error={d.error} onRetry={d.reload} />
-      {!x && d.loading && <Loading />}
+      {!x && d.loading && <Loading variant="dashboard" />}
       {x && (
         <>
           <div className="row g-3 mb-3">

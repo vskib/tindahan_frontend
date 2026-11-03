@@ -22,7 +22,7 @@ function SaleDetail({ id, onClose }) {
     <Modal title="Sale details" onClose={onClose}
       footer={<><button className="btn btn-outline-secondary" onClick={() => window.print()} disabled={!receipt}>🖨 Print copy</button>
         <button className="btn btn-primary" onClick={onClose}>Close</button></>}>
-      {d.loading && !receipt && <Loading />}
+      {d.loading && !receipt && <Loading variant="detail" />}
       <ErrorAlert error={d.error} onRetry={d.reload} />
       {receipt && <Receipt receipt={receipt} copy />}
     </Modal>
@@ -152,7 +152,7 @@ export default function Sales() {
             <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || (!reportRows.length && !inventory)}>Download CSV</button>
           </div>
         </div>
-        {report.loading && reportRequested ? <Loading /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
+        {report.loading && reportRequested ? <Loading variant="table" /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
           <div className="table-responsive"><table className="table table-sm mb-0">
             <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Units sold</th><th className="text-end">Total sales</th><th className="text-end">Profit</th><th className="text-end">Average sale</th></tr></thead>
             <tbody>{reportRows.map((r) => {
@@ -234,7 +234,7 @@ export default function Sales() {
                 <td className="text-end"><button className="btn btn-sm btn-outline-primary" onClick={() => setViewing(s.id)}>View</button></td></tr>))}</tbody>
           </table>
         </div>
-        {list.loading && !list.data && <Loading />}
+        {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>No sales in this period.</Empty>}
         <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
       </div>

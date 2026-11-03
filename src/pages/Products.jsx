@@ -139,7 +139,7 @@ export default function Products() {
             </tbody>
           </table>
         </div>
-        {list.loading && !list.data && <Loading />}
+        {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>{q ? 'No products match your search.' : 'No products yet.'}</Empty>}
         <div className="card-footer"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div>
       </div>
