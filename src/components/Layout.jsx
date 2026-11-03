@@ -38,7 +38,7 @@ export default function Layout() {
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="app-brand">
-          <span className="app-brand-mark" aria-hidden="true">T</span>
+          <img className="app-brand-mark" src="/grocery-store.png" alt="" />
           <span className="app-brand-name">{profile.store_name}</span>
         </div>
         <div className="sidebar-caption">WORKSPACE</div>

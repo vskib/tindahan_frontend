@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 // Anything named VITE_* is copied into the browser bundle and is PUBLIC.
 // Refuse to build if something that looks like a secret ended up in one.
@@ -25,7 +26,7 @@ function assertNoSecretsInBrowserEnv(env) {
 export default defineConfig(({ mode }) => {
   assertNoSecretsInBrowserEnv(loadEnv(mode, process.cwd(), ''));
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     build: { sourcemap: false, chunkSizeWarningLimit: 600 },
     // `npm run test:integration` (INTEGRATION=1) runs the real pages against the real backend + database.
     test: process.env.INTEGRATION

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-/** Bootstrap-styled modal without Bootstrap's JavaScript. Esc closes it unless dismissible={false}. */
+/** Modal without a JavaScript UI framework. Esc closes it unless dismissible={false}. */
 export default function Modal({ title, onClose, children, footer, size = '', dismissible = true }) {
   const titleId = useId();
   const ref = useRef(null);
