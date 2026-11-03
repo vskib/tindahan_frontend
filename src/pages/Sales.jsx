@@ -52,24 +52,57 @@ export default function Sales() {
     if (reportRequested) report.reload();
     else setReportRequested(true);
   };
+  const rows = list.data?.data ?? [];
+  const dayRows = days.data?.data ?? [];
+  const reportRows = report.data?.data ?? [];
+  const inventory = report.data?.inventory ?? null;
   const downloadReport = () => {
-    const rows = report.data?.data ?? [];
     const escape = (value) => `"${String(value).replaceAll('"', '""')}"`;
-    const csv = [
-      ['Period', 'Transactions', 'Units sold', 'Total sales (PHP)', 'Average sale (PHP)', 'Inventory left (units)'],
-      ...rows.map((r) => {
+    const csvRows = [
+      ['Section', 'Period / Product', 'Transactions', 'Units sold', 'Total sales (PHP)', 'Profit (PHP)', 'Average sale (PHP)', 'Starting inventory (units)', 'Ending inventory (units)', 'Inventory change (units)', 'Current inventory (units)', 'Product status'],
+      ...reportRows.map((r) => {
         const total = Number(r.total_centavos) / 100;
+        const profit = Number(r.profit_centavos ?? 0) / 100;
         const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
         return [
+          'Sales',
           period === 'week' ? `Week of ${r.period_start}` : r.period_start.slice(0, 7),
           r.txn_count,
           r.qty_sold ?? 0,
           total.toFixed(2),
+          profit.toFixed(2),
           average.toFixed(2),
-          inventoryLeft ?? 0,
+          '',
+          '',
+          '',
+          '',
+          '',
         ];
       }),
-    ].map((row) => row.map(escape).join(',')).join('\r\n');
+    ];
+    if (inventory) {
+      csvRows.push(
+        [],
+        ['Inventory', `Opening total at start of ${inventory.starting_date}`, '', '', '', '', '', inventory.starting_units],
+        ['Inventory', `Closing total at end of ${inventory.ending_date}`, '', '', '', '', '', '', inventory.ending_units],
+        ['Inventory', 'Current total units', '', '', '', '', '', '', '', '', inventory.current_units],
+        ...inventory.products.map((product) => [
+          'Inventory',
+          product.name,
+          '',
+          '',
+          '',
+          '',
+          '',
+          product.starting_qty,
+          product.ending_qty,
+          product.ending_qty - product.starting_qty,
+          product.current_qty,
+          product.is_active ? 'Active' : 'Archived',
+        ]),
+      );
+    }
+    const csv = csvRows.map((row) => row.map(escape).join(',')).join('\r\n');
     const url = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -79,17 +112,14 @@ export default function Sales() {
     link.remove();
     window.setTimeout(() => window.URL.revokeObjectURL(url), 0);
   };
-  const rows = list.data?.data ?? [];
-  const dayRows = days.data?.data ?? [];
-  const reportRows = report.data?.data ?? [];
-  const inventoryLeft = report.data?.inventory_left ?? null;
   const grand = dayRows.reduce((s, r) => s + Number(r.total_centavos), 0);
   const grandCount = dayRows.reduce((s, r) => s + Number(r.txn_count), 0);
   const reportTotals = reportRows.reduce((s, r) => ({
     txn_count: s.txn_count + Number(r.txn_count || 0),
     total_centavos: s.total_centavos + Number(r.total_centavos || 0),
     qty_sold: s.qty_sold + Number(r.qty_sold || 0),
-  }), { txn_count: 0, total_centavos: 0, qty_sold: 0 });
+    profit_centavos: s.profit_centavos + Number(r.profit_centavos || 0),
+  }), { txn_count: 0, total_centavos: 0, qty_sold: 0, profit_centavos: 0 });
   const averageSale = reportTotals.txn_count > 0 ? reportTotals.total_centavos / reportTotals.txn_count : 0;
   return (
     <>
@@ -119,14 +149,15 @@ export default function Sales() {
               <option value="month">Monthly</option>
             </select>
             <button className="btn btn-sm btn-primary" onClick={generateReport} disabled={Boolean(rangeError) || report.loading}>Generate summary of sales</button>
-            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || reportRows.length === 0}>Download CSV</button>
+            <button className="btn btn-sm btn-outline-primary" onClick={downloadReport} disabled={!reportRequested || report.loading || Boolean(report.error) || (!reportRows.length && !inventory)}>Download CSV</button>
           </div>
         </div>
         {report.loading && reportRequested ? <Loading /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
           <div className="table-responsive"><table className="table table-sm mb-0">
-            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Units sold</th><th className="text-end">Total sales</th><th className="text-end">Average sale</th><th className="text-end">Inventory left</th></tr></thead>
+            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Units sold</th><th className="text-end">Total sales</th><th className="text-end">Profit</th><th className="text-end">Average sale</th></tr></thead>
             <tbody>{reportRows.map((r) => {
               const total = Number(r.total_centavos);
+              const profit = Number(r.profit_centavos ?? 0);
               const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
               return (
                 <tr key={r.period_start}>
@@ -134,20 +165,56 @@ export default function Sales() {
                   <td className="money">{r.txn_count}</td>
                   <td className="money">{r.qty_sold ?? 0}</td>
                   <td className="money fw-semibold">{pesos(total)}</td>
+                  <td className={`money fw-semibold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{pesos(profit)}</td>
                   <td className="money">{pesos(average)}</td>
-                  <td className="money">{inventoryLeft ?? 0}</td>
                 </tr>
               );
             })}</tbody>
           </table>
           <div className="card-footer small text-muted border-0">
-            {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)} · Average {pesos(averageSale)} · Inventory left: {inventoryLeft ?? 0} units
+            {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)} · Profit {pesos(reportTotals.profit_centavos)} · Average {pesos(averageSale)}
           </div>
           </div>
         )}
         {!isOwner && <div className="card-footer small text-muted">This report includes only the sales you rang up.</div>}
       </div>
      )}
+
+      {isOwner && reportRequested && !report.loading && !report.error && inventory && (
+        <div className="card shadow-sm mb-3">
+          <div className="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <strong>Inventory snapshot</strong>
+            <span className="badge bg-primary">{inventory.current_units} total units currently in inventory</span>
+          </div>
+          <div className="card-body pb-0">
+            <p className="small text-muted">Starting inventory is the stock at the beginning of {inventory.starting_date}. Ending inventory is the stock at the end of {inventory.ending_date}. Current inventory is the live stock when this report was generated.</p>
+            <div className="row g-2 mb-3">
+              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Starting inventory · {inventory.starting_date}</div><strong className="fs-5">{inventory.starting_units} units</strong></div></div>
+              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Ending inventory · {inventory.ending_date}</div><strong className="fs-5">{inventory.ending_units} units</strong></div></div>
+              <div className="col-md-4"><div className="border rounded p-3 h-100"><div className="small text-muted">Total units currently in inventory</div><strong className="fs-5">{inventory.current_units} units</strong></div></div>
+            </div>
+          </div>
+          <div className="table-responsive">
+            <table className="table table-sm table-hover mb-0">
+              <thead><tr><th>Product</th><th>Status</th><th className="text-end">Starting stock</th><th className="text-end">Ending stock</th><th className="text-end">Change</th><th className="text-end">Current stock</th></tr></thead>
+              <tbody>{inventory.products.map((product) => {
+                const change = product.ending_qty - product.starting_qty;
+                return (
+                  <tr key={product.id}>
+                    <td>{product.name}</td>
+                    <td>{product.is_active ? 'Active' : 'Archived'}</td>
+                    <td className="money">{product.starting_qty}</td>
+                    <td className="money">{product.ending_qty}</td>
+                    <td className={`money ${change < 0 ? 'text-danger' : change > 0 ? 'text-success' : ''}`}>{change > 0 ? '+' : ''}{change}</td>
+                    <td className="money fw-semibold">{product.current_qty}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+            {inventory.products.length === 0 && <div className="p-3"><Empty>No products in inventory.</Empty></div>}
+          </div>
+        </div>
+      )}
 
       {isOwner && dayRows.length > 0 && (
         <div className="card shadow-sm mb-3">
