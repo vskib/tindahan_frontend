@@ -123,11 +123,11 @@ export default function POS() {
   return (
     <div className="grid grid-cols-12 gap-3">
       <div className="col-span-12 lg:col-span-7">
-        <div className="join mb-3 w-full">
-          <input ref={searchRef} className="input input-bordered input-lg join-item w-full" placeholder="Search by name or scan barcode/SKU…"
+        <div className="mb-3 flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
+          <input ref={searchRef} className="input input-bordered input-lg h-12 min-h-12 w-full min-w-0 sm:flex-1" placeholder="Search by name or scan barcode/SKU…"
             aria-label="Search products by name or barcode" autoFocus value={search} disabled={locked}
             onChange={(e) => setSearch(e.target.value)} onKeyDown={onSearchKey} />
-          <button className="btn btn-outline btn-primary join-item" type="button" disabled={locked} onClick={() => setScannerOpen(true)}>Scan barcode</button>
+          <button className="btn btn-outline btn-primary h-12 min-h-12 w-full shrink-0 sm:w-auto" type="button" disabled={locked} onClick={() => setScannerOpen(true)}>Scan barcode</button>
         </div>
         <ErrorAlert error={products.error} onRetry={products.reload} />
         {products.loading && !products.data && <Loading variant="grid" />}

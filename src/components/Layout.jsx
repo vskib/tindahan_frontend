@@ -40,7 +40,7 @@ export default function Layout() {
       <aside className="hidden flex-col border-r border-base-300 bg-base-100 p-4 xl:sticky xl:top-0 xl:flex xl:h-screen">
         <div className="flex min-w-0 items-center gap-3 px-1 pb-3 md:px-2 md:pb-8">
           <img className="h-10 w-10 shrink-0 object-contain" src="/grocery-store.png" alt="" />
-          <span className="truncate text-lg font-bold">{profile.store_name}</span>
+          <span className="min-w-0 flex-1 whitespace-normal break-words text-base font-bold leading-tight">{profile.store_name}</span>
         </div>
         <div className="mb-2 px-3 text-xs font-bold tracking-widest text-base-content/50">WORKSPACE</div>
         <nav className="grid gap-1" aria-label="Main navigation">
