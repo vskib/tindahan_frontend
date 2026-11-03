@@ -56,12 +56,19 @@ export default function Sales() {
     const rows = report.data?.data ?? [];
     const escape = (value) => `"${String(value).replaceAll('"', '""')}"`;
     const csv = [
-      ['Period', 'Transactions', 'Total sales (PHP)'],
-      ...rows.map((r) => [
-        period === 'week' ? `Week of ${r.period_start}` : r.period_start.slice(0, 7),
-        r.txn_count,
-        (Number(r.total_centavos) / 100).toFixed(2),
-      ]),
+      ['Period', 'Transactions', 'Units sold', 'Total sales (PHP)', 'Average sale (PHP)', 'Inventory left (units)'],
+      ...rows.map((r) => {
+        const total = Number(r.total_centavos) / 100;
+        const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
+        return [
+          period === 'week' ? `Week of ${r.period_start}` : r.period_start.slice(0, 7),
+          r.txn_count,
+          r.qty_sold ?? 0,
+          total.toFixed(2),
+          average.toFixed(2),
+          inventoryLeft ?? 0,
+        ];
+      }),
     ].map((row) => row.map(escape).join(',')).join('\r\n');
     const url = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
@@ -75,8 +82,15 @@ export default function Sales() {
   const rows = list.data?.data ?? [];
   const dayRows = days.data?.data ?? [];
   const reportRows = report.data?.data ?? [];
+  const inventoryLeft = report.data?.inventory_left ?? null;
   const grand = dayRows.reduce((s, r) => s + Number(r.total_centavos), 0);
   const grandCount = dayRows.reduce((s, r) => s + Number(r.txn_count), 0);
+  const reportTotals = reportRows.reduce((s, r) => ({
+    txn_count: s.txn_count + Number(r.txn_count || 0),
+    total_centavos: s.total_centavos + Number(r.total_centavos || 0),
+    qty_sold: s.qty_sold + Number(r.qty_sold || 0),
+  }), { txn_count: 0, total_centavos: 0, qty_sold: 0 });
+  const averageSale = reportTotals.txn_count > 0 ? reportTotals.total_centavos / reportTotals.txn_count : 0;
   return (
     <>
       <h1 className="page-title">Sales history</h1>
@@ -110,15 +124,26 @@ export default function Sales() {
         </div>
         {report.loading && reportRequested ? <Loading /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
           <div className="table-responsive"><table className="table table-sm mb-0">
-            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Total sales</th></tr></thead>
-            <tbody>{reportRows.map((r) => (
-              <tr key={r.period_start}>
-                <td>{period === 'week' ? r.period_start : r.period_start.slice(0, 7)}</td>
-                <td className="money">{r.txn_count}</td>
-                <td className="money fw-semibold">{pesos(Number(r.total_centavos))}</td>
-              </tr>
-            ))}</tbody>
-          </table></div>
+            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-end">Transactions</th><th className="text-end">Units sold</th><th className="text-end">Total sales</th><th className="text-end">Average sale</th><th className="text-end">Inventory left</th></tr></thead>
+            <tbody>{reportRows.map((r) => {
+              const total = Number(r.total_centavos);
+              const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
+              return (
+                <tr key={r.period_start}>
+                  <td>{period === 'week' ? r.period_start : r.period_start.slice(0, 7)}</td>
+                  <td className="money">{r.txn_count}</td>
+                  <td className="money">{r.qty_sold ?? 0}</td>
+                  <td className="money fw-semibold">{pesos(total)}</td>
+                  <td className="money">{pesos(average)}</td>
+                  <td className="money">{inventoryLeft ?? 0}</td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+          <div className="card-footer small text-muted border-0">
+            {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)} · Average {pesos(averageSale)} · Inventory left: {inventoryLeft ?? 0} units
+          </div>
+          </div>
         )}
         {!isOwner && <div className="card-footer small text-muted">This report includes only the sales you rang up.</div>}
       </div>
