@@ -94,6 +94,7 @@ export default function Sales() {
       {rangeError && <div className="alert alert-warning">{rangeError}</div>}
       <ErrorAlert error={list.error ?? days.error ?? report.error} onRetry={() => { list.reload(); days.reload(); report.reload(); }} />
 
+      {isOwner && (
       <div className="card shadow-sm mb-3">
         <div className="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
           <strong>{period === 'week' ? 'Weekly sales report' : 'Monthly sales report'}</strong>
@@ -121,6 +122,7 @@ export default function Sales() {
         )}
         {!isOwner && <div className="card-footer small text-muted">This report includes only the sales you rang up.</div>}
       </div>
+     )}
 
       {isOwner && dayRows.length > 0 && (
         <div className="card shadow-sm mb-3">
