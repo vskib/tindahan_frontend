@@ -17,6 +17,3 @@ The owner manages products, stock, staff accounts, and store-wide reporting. Cas
 
 Use a secure HTTPS address for camera scanning outside localhost. Printing uses the browser’s print dialog, so select the connected receipt printer there.
 
-## Tests
-
-`npm test` runs the frontend unit tests. `npm run test:integration` uses the backend test harness and requires its local PostgreSQL and PostgREST setup.
