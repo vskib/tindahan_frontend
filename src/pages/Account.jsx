@@ -96,6 +96,28 @@ export default function Account() {
         <div className="mb-3">{isOwner ? 'Owner' : 'Cashier'} · {profile.store_name}</div>
         <button className="btn btn-outline btn-error" onClick={logout}>Log out</button>
       </div></div>
+      <section className="card mb-3 border border-base-300 bg-base-100 shadow-sm" aria-labelledby="access-title">
+        <div className="border-b border-base-300 px-4 py-3"><strong id="access-title">Store permissions</strong></div>
+        <div className="card-body grid gap-4 sm:grid-cols-2">
+          <div className={`rounded-lg border p-3 ${isOwner ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
+            <h2 className="mb-2 font-semibold">Owner{isOwner && <span className="badge badge-primary ms-2">Your role</span>}</h2>
+            <ul className="list-disc space-y-1 ps-5 text-sm text-base-content/70">
+              <li>Manage products and stock</li>
+              <li>View store-wide sales and reports</li>
+              <li>Create and manage cashier accounts</li>
+            </ul>
+          </div>
+          <div className={`rounded-lg border p-3 ${!isOwner ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
+            <h2 className="mb-2 font-semibold">Cashier{!isOwner && <span className="badge badge-primary ms-2">Your role</span>}</h2>
+            <ul className="list-disc space-y-1 ps-5 text-sm text-base-content/70">
+              <li>Process sales and print receipts</li>
+              <li>Browse active products without changing them</li>
+              <li>View your own sales history</li>
+            </ul>
+          </div>
+          <p className="mb-0 text-sm text-base-content/60 sm:col-span-2">Both roles can update their own password and log out.</p>
+        </div>
+      </section>
       <ChangePassword />
       {isOwner && <Staff myId={profile.id} />}
     </div>

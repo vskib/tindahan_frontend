@@ -12,11 +12,11 @@ const LABEL = {
   stock_count_correction: 'Actual counted quantity', other: 'Quantity',
 };
 
-function AdjustModal({ product, onClose, onSaved }) {
+function AdjustModal({ product, onClose, onSaved, initialReason = 'new_delivery' }) {
   // Load the CURRENT stock so a count correction is computed from fresh numbers.
   const fresh = useFetch(() => api(`/api/products/${product.id}`), [product.id]);
   const current = fresh.data?.data.stock_qty ?? null;
-  const [reason, setReason] = useState('new_delivery');
+  const [reason, setReason] = useState(initialReason);
   const [qty, setQty] = useState('');
   const [dir, setDir] = useState('add');
   const [note, setNote] = useState('');
@@ -48,11 +48,11 @@ function AdjustModal({ product, onClose, onSaved }) {
     } catch (e) { setError(e.message); setBusy(false); }
   };
   return (
-    <Modal title={`Adjust stock: ${product.name}`} onClose={onClose}
+    <Modal title={`${reason === 'stock_count_correction' ? 'Count stock' : 'Adjust stock'}: ${product.name}`} onClose={onClose}
       footer={<><button className="btn btn-outline btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
         <button className="btn btn-primary" onClick={save} disabled={!canSave}>{busy && <Spin />}Save</button></>}>
       {fresh.loading && !fresh.data ? <Loading variant="detail" /> : <ErrorAlert error={fresh.error} onRetry={fresh.reload} />}
-      {current !== null && <p>Currently in stock: <strong>{current}</strong></p>}
+      {current !== null && <p>System stock: <strong>{current}</strong>{reason === 'stock_count_correction' && ' · Enter the actual quantity counted.'}</p>}
       {error && <div className="alert alert-error">{error}</div>}
       <div className="mb-3"><label className="label-text block font-medium" htmlFor="reason">Reason</label>
         <select id="reason" className="select select-bordered" value={reason} onChange={(e) => setReason(e.target.value)}>
@@ -99,11 +99,14 @@ function StockTab() {
             <tr key={p.id}><td>{p.name}</td>
               <td className="money">{p.stock_qty} {p.stock_qty <= p.low_stock_threshold && <span className="badge badge-warning ms-1">{p.stock_qty === 0 ? 'Out' : 'Low'}</span>}</td>
               <td className="money">{p.low_stock_threshold}</td>
-              <td className="text-right"><button className="btn btn-sm btn-primary" onClick={() => setAdjusting(p)}>Add / adjust stock</button></td></tr>))}</tbody></table></div>
+              <td className="text-right whitespace-nowrap">
+                <button className="btn btn-sm btn-outline btn-primary me-1" onClick={() => setAdjusting({ ...p, count: true })}>Count stock</button>
+                <button className="btn btn-sm btn-primary" onClick={() => setAdjusting(p)}>Add / adjust stock</button>
+              </td></tr>))}</tbody></table></div>
         {list.loading && !list.data && <Loading variant="table" />}
         {list.data && rows.length === 0 && <Empty>No products found.</Empty>}
         <div className="border-t border-base-300 px-4 py-3"><Pagination page={page} pageSize={pageSize} total={list.data?.total ?? 0} onPage={setPage} /></div></div>
-      {adjusting && <AdjustModal product={adjusting} onClose={() => setAdjusting(null)} onSaved={done} />}
+      {adjusting && <AdjustModal product={adjusting} initialReason={adjusting.count ? 'stock_count_correction' : 'new_delivery'} onClose={() => setAdjusting(null)} onSaved={done} />}
     </>
   );
 }

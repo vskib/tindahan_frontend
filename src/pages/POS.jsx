@@ -219,14 +219,16 @@ export default function POS() {
       {phase === 'done' && receipt && (
         <Modal title="Sale complete ✔" dismissible={false} onClose={nextCustomer}
           footer={<>
-            <button className="btn btn-outline btn-secondary" onClick={() => window.print()}>🖨 Print receipt</button>
+            <button className="btn btn-outline btn-secondary" onClick={() => window.print()} aria-label="Print receipt">🖨 Print receipt</button>
             <button className="btn btn-primary" onClick={nextCustomer}>Next customer</button>
           </>}>
           <div className="text-center mb-3">
             <div className="text-base-content/60">Change to give</div>
             <div className="text-4xl text-success font-bold" data-testid="final-change">{pesos(receipt.change_centavos)}</div>
           </div>
-          <Receipt receipt={receipt} />
+          <div className="rounded-lg border border-base-300 bg-base-200/50 p-4">
+            <Receipt receipt={receipt} />
+          </div>
         </Modal>
       )}
       {scannerOpen && (

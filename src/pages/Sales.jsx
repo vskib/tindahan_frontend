@@ -24,7 +24,34 @@ function SaleDetail({ id, onClose }) {
         <button className="btn btn-primary" onClick={onClose}>Close</button></>}>
       {d.loading && !receipt && <Loading variant="detail" />}
       <ErrorAlert error={d.error} onRetry={d.reload} />
-      {receipt && <Receipt receipt={receipt} copy />}
+      {receipt && (
+        <div className="space-y-4">
+          <section aria-label="Transaction summary" className="grid gap-2 rounded-lg border border-base-300 p-3 text-sm sm:grid-cols-3">
+            <div><span className="block text-base-content/60">Transaction</span><strong>{sale.txn_no}</strong></div>
+            <div><span className="block text-base-content/60">Date &amp; time</span><strong>{formatDateTime(sale.created_at)}</strong></div>
+            <div><span className="block text-base-content/60">Cashier</span><strong>{sale.cashier?.full_name ?? '—'}</strong></div>
+          </section>
+          <section aria-label="Items sold">
+            <h3 className="mb-2 font-semibold">Items sold</h3>
+            <div className="overflow-x-auto rounded-lg border border-base-300">
+              <table className="table table-sm">
+                <thead><tr><th>Product</th><th className="text-right">Qty</th><th className="text-right">Unit price</th><th className="text-right">Amount</th></tr></thead>
+                <tbody>{sale.items.map((item) => (
+                  <tr key={item.product_id}>
+                    <td>{item.product_name}</td>
+                    <td className="money">{item.qty}</td>
+                    <td className="money">{pesos(item.unit_price_centavos)}</td>
+                    <td className="money font-semibold">{pesos(item.line_total_centavos)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </section>
+          <section aria-label="Receipt preview" className="rounded-lg border border-base-300 bg-base-200/50 p-4">
+            <Receipt receipt={receipt} copy />
+          </section>
+        </div>
+      )}
     </Modal>
   );
 }

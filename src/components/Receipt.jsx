@@ -4,15 +4,17 @@ import { formatDateTime } from '../lib/format.js';
 /** Receipt content comes ONLY from the server's confirmed sale record. */
 export default function Receipt({ receipt, copy = false }) {
   return (
-    <div className="receipt receipt-print" data-testid="receipt">
+    <div className="receipt receipt-print" data-testid="receipt" aria-label="Sales receipt preview">
+      <div className="receipt-preview-label text-center text-xs uppercase tracking-widest text-base-content/60">Receipt preview</div>
       <div className="text-center font-bold" style={{ fontSize: 16 }}>{receipt.store_name}</div>
-      <div className="text-center">Sales receipt{copy ? ' (copy)' : ''}</div>
+      <div className="text-center font-semibold">Sales receipt{copy ? ' (copy)' : ''}</div>
       <div className="sep" />
       <div>No: {receipt.txn_no}</div>
       <div>Date: {formatDateTime(receipt.created_at)}</div>
       {receipt.cashier_name && <div>Cashier: {receipt.cashier_name}</div>}
       <div className="sep" />
       <table>
+        <thead className="sr-only"><tr><th scope="col">Item and quantity</th><th scope="col">Line total</th></tr></thead>
         <tbody>
           {receipt.items.map((i) => (
             <tr key={i.product_id}>

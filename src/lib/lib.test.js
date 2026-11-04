@@ -3,6 +3,7 @@ import { pesos, parsePesos, centavosToInput } from './money.js';
 import { addProduct, setQty, removeLine, cartTotal, cartCount, toCheckoutItems } from './cart.js';
 import { isAmbiguous } from './checkout.js';
 import { addDays } from './format.js';
+import { buildSalesTrend } from './salesTrend.js';
 import { navItemsFor } from '../components/Layout.jsx';
 
 describe('money', () => {
@@ -72,6 +73,16 @@ describe('isAmbiguous (was the sale possibly saved?)', () => {
 
 describe('misc', () => {
   it('addDays crosses month boundaries', () => { expect(addDays('2026-03-01', -1)).toBe('2026-02-28'); expect(addDays('2026-12-31', 1)).toBe('2027-01-01'); });
+  it('fills missing days in sales trends with zero totals', () => {
+    expect(buildSalesTrend([
+      { day: '2026-11-02', total_centavos: 1250 },
+      { day: '2026-11-04', total_centavos: '2000' },
+    ], '2026-11-02', 3)).toEqual([
+      { day: '2026-11-02', total_centavos: 1250 },
+      { day: '2026-11-03', total_centavos: 0 },
+      { day: '2026-11-04', total_centavos: 2000 },
+    ]);
+  });
   it('cashiers do not get owner navigation', () => {
     const cashier = navItemsFor('cashier').map((n) => n.label);
     const owner = navItemsFor('owner').map((n) => n.label);
