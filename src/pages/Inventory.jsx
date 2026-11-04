@@ -15,7 +15,9 @@ const LABEL = {
 function AdjustModal({ product, onClose, onSaved, initialReason = 'new_delivery' }) {
   // Load the CURRENT stock so a count correction is computed from fresh numbers.
   const fresh = useFetch(() => api(`/api/products/${product.id}`), [product.id]);
-  const current = fresh.data?.data.stock_qty ?? null;
+  const [refreshedProduct, setRefreshedProduct] = useState(null);
+  const currentProduct = refreshedProduct ?? fresh.data?.data ?? null;
+  const current = currentProduct?.stock_qty ?? null;
   const [reason, setReason] = useState(initialReason);
   const [qty, setQty] = useState('');
   const [dir, setDir] = useState('add');
@@ -43,6 +45,16 @@ function AdjustModal({ product, onClose, onSaved, initialReason = 'new_delivery'
   const save = async () => {
     setBusy(true); setError(null);
     try {
+      if (reason === 'stock_count_correction') {
+        const { data: latest } = await api(`/api/products/${product.id}`);
+        if (latest.stock_qty !== current || latest.updated_at !== currentProduct?.updated_at) {
+          setRefreshedProduct(latest);
+          setQty('');
+          setError('Stock changed while this count was open. Check the shelf again, then enter the actual quantity using the updated system stock. Nothing was saved.');
+          setBusy(false);
+          return;
+        }
+      }
       await api(`/api/products/${product.id}/stock-adjustments`, { method: 'POST', body: { delta, reason, ...(note.trim() ? { note: note.trim() } : {}) } });
       onSaved();
     } catch (e) { setError(e.message); setBusy(false); }
@@ -55,15 +67,15 @@ function AdjustModal({ product, onClose, onSaved, initialReason = 'new_delivery'
       {current !== null && <p>System stock: <strong>{current}</strong>{reason === 'stock_count_correction' && ' · Enter the actual quantity counted.'}</p>}
       {error && <div className="alert alert-error">{error}</div>}
       <div className="mb-3"><label className="label-text block font-medium" htmlFor="reason">Reason</label>
-        <select id="reason" className="select select-bordered" value={reason} onChange={(e) => setReason(e.target.value)}>
+        <select id="reason" className="select select-bordered" value={reason} disabled={busy} onChange={(e) => setReason(e.target.value)}>
           {ADJUST_REASONS.map((r) => <option key={r} value={r}>{REASONS[r]}</option>)}</select></div>
       {reason === 'other' && <div className="mb-3"><label className="label-text block font-medium" htmlFor="dir">Direction</label>
-        <select id="dir" className="select select-bordered" value={dir} onChange={(e) => setDir(e.target.value)}><option value="add">Add to stock</option><option value="remove">Remove from stock</option></select></div>}
+        <select id="dir" className="select select-bordered" value={dir} disabled={busy} onChange={(e) => setDir(e.target.value)}><option value="add">Add to stock</option><option value="remove">Remove from stock</option></select></div>}
       <div className="mb-3"><label className="label-text block font-medium" htmlFor="qty">{LABEL[reason]}</label>
-        <input id="qty" className={`input input-bordered w-full ${problem ? 'input-error' : ''}`} inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
+        <input id="qty" className={`input input-bordered w-full ${problem ? 'input-error' : ''}`} inputMode="numeric" disabled={busy} value={qty} onChange={(e) => { setQty(e.target.value); setError(null); }} />
         {problem && <div className="text-sm text-error">{problem}</div>}</div>
       <div className="mb-3"><label className="label-text block font-medium" htmlFor="note">Note {reason === 'other' ? '(required)' : '(optional)'}</label>
-        <input id="note" className="input input-bordered w-full" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+        <input id="note" className="input input-bordered w-full" maxLength={500} disabled={busy} value={note} onChange={(e) => setNote(e.target.value)} /></div>
       {after !== null && !problem && delta !== 0 && <div className="alert alert-info mb-0">Stock will change from <strong>{current}</strong> to <strong>{after}</strong> ({delta > 0 ? '+' : ''}{delta}).</div>}
     </Modal>
   );

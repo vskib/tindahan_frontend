@@ -1,6 +1,6 @@
 // Real page components -> real fetch -> real Express app -> real supabase-js -> real PostgREST -> real PostgreSQL.
 // Only login is simulated (a fake token verifier), because that needs hosted Supabase Auth.
-// Prerequisites: see backend/tests/api/harness.js (local Postgres with the migrated test database, PostgREST binary).
+// Prerequisites: see ../tindahan_backend/tests/api/harness.js (local Postgres with the migrated test database, PostgREST binary).
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -12,8 +12,8 @@ vi.mock('../lib/supabase.js', () => ({
 }));
 vi.mock('../auth/AuthContext.jsx', () => ({ useAuth: () => globalThis.__auth }));
 
-import { startInfra, makeApp, seedUser, uuid } from '../../../backend/tests/api/harness.js';
-import { servicePool, mkProduct } from '../../../backend/tests/db/helpers.js';
+import { startInfra, makeApp, seedUser, uuid } from '../../../tindahan_backend/tests/api/harness.js';
+import { servicePool, mkProduct } from '../../../tindahan_backend/tests/db/helpers.js';
 import POS from '../pages/POS.jsx';
 import Products from '../pages/Products.jsx';
 import Inventory from '../pages/Inventory.jsx';

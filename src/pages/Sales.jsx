@@ -83,28 +83,33 @@ export default function Sales() {
   const dayRows = days.data?.data ?? [];
   const reportRows = report.data?.data ?? [];
   const inventory = report.data?.inventory ?? null;
+  const estimatedProfitComplete = isOwner && reportRows.length > 0 && reportRows.every((row) =>
+    row.profit_complete === true && row.estimated_gross_profit_centavos != null);
+  const estimatedProfitTotal = estimatedProfitComplete
+    ? reportRows.reduce((sum, row) => sum + Number(row.estimated_gross_profit_centavos), 0)
+    : null;
   const downloadReport = () => {
-    const escape = (value) => `"${String(value).replaceAll('"', '""')}"`;
+    const escape = (value) => {
+      let text = String(value);
+      // Quoting alone does not stop spreadsheet programs from evaluating formulas.
+      if (typeof value === 'string' && /^[\u0000-\u0020]*[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replaceAll('"', '""')}"`;
+    };
     const csvRows = [
-      ['Section', 'Period / Product', 'Transactions', 'Units sold', 'Total sales (PHP)', 'Profit (PHP)', 'Average sale (PHP)', 'Starting inventory (units)', 'Ending inventory (units)', 'Inventory change (units)', 'Current inventory (units)', 'Product status'],
+      ['Section', 'Period / Product', 'Transactions', 'Units sold', 'Total sales (PHP)', ...(isOwner ? ['Estimated gross profit (current cost basis; PHP)'] : []), 'Average sale (PHP)', 'Starting inventory (units)', 'Ending inventory (units)', 'Inventory change (units)', 'Current inventory (units)', 'Product status'],
       ...reportRows.map((r) => {
         const total = Number(r.total_centavos) / 100;
-        const profit = Number(r.profit_centavos ?? 0) / 100;
         const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
-        return [
+        const row = [
           'Sales',
           period === 'week' ? `Week of ${r.period_start}` : r.period_start.slice(0, 7),
           r.txn_count,
           r.qty_sold ?? 0,
           total.toFixed(2),
-          profit.toFixed(2),
-          average.toFixed(2),
-          '',
-          '',
-          '',
-          '',
-          '',
         ];
+        if (isOwner) row.push(r.profit_complete ? (Number(r.estimated_gross_profit_centavos) / 100).toFixed(2) : 'INCOMPLETE COST DATA');
+        row.push(average.toFixed(2), '', '', '', '', '');
+        return row;
       }),
     ];
     if (inventory) {
@@ -145,8 +150,7 @@ export default function Sales() {
     txn_count: s.txn_count + Number(r.txn_count || 0),
     total_centavos: s.total_centavos + Number(r.total_centavos || 0),
     qty_sold: s.qty_sold + Number(r.qty_sold || 0),
-    profit_centavos: s.profit_centavos + Number(r.profit_centavos || 0),
-  }), { txn_count: 0, total_centavos: 0, qty_sold: 0, profit_centavos: 0 });
+  }), { txn_count: 0, total_centavos: 0, qty_sold: 0 });
   const averageSale = reportTotals.txn_count > 0 ? reportTotals.total_centavos / reportTotals.txn_count : 0;
   return (
     <>
@@ -165,7 +169,6 @@ export default function Sales() {
       {rangeError && <div className="alert alert-warning">{rangeError}</div>}
       <ErrorAlert error={list.error ?? days.error ?? report.error} onRetry={() => { list.reload(); days.reload(); report.reload(); }} />
 
-      {isOwner && (
       <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-4 py-3">
           <strong>{period === 'week' ? 'Weekly sales report' : 'Monthly sales report'}</strong>
@@ -181,10 +184,9 @@ export default function Sales() {
         </div>
         {report.loading && reportRequested ? <Loading variant="table" /> : report.error ? null : !reportRequested ? <Empty>Choose weekly or monthly, then generate your sales summary.</Empty> : reportRows.length === 0 ? <Empty>No sales in this period.</Empty> : (
           <div className="overflow-x-auto"><table className="table table-xs mb-0">
-            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-right">Transactions</th><th className="text-right">Units sold</th><th className="text-right">Total sales</th><th className="text-right">Profit</th><th className="text-right">Average sale</th></tr></thead>
+            <thead><tr><th>{period === 'week' ? 'Week starting (Monday)' : 'Month'}</th><th className="text-right">Transactions</th><th className="text-right">Units sold</th><th className="text-right">Total sales</th>{isOwner && <th className="text-right">Est. gross profit</th>}<th className="text-right">Average sale</th></tr></thead>
             <tbody>{reportRows.map((r) => {
               const total = Number(r.total_centavos);
-              const profit = Number(r.profit_centavos ?? 0);
               const average = Number(r.txn_count || 0) > 0 ? total / Number(r.txn_count) : 0;
               return (
                 <tr key={r.period_start}>
@@ -192,20 +194,20 @@ export default function Sales() {
                   <td className="money">{r.txn_count}</td>
                   <td className="money">{r.qty_sold ?? 0}</td>
                   <td className="money font-semibold">{pesos(total)}</td>
-                  <td className={`money font-semibold ${profit >= 0 ? 'text-success' : 'text-error'}`}>{pesos(profit)}</td>
+                  {isOwner && <td className="money font-semibold">{r.profit_complete ? pesos(r.estimated_gross_profit_centavos) : 'Incomplete cost data'}</td>}
                   <td className="money">{pesos(average)}</td>
                 </tr>
               );
             })}</tbody>
           </table>
           <div className="px-4 py-3 text-sm text-base-content/60">
-            {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)} · Profit {pesos(reportTotals.profit_centavos)} · Average {pesos(averageSale)}
+            {reportTotals.txn_count} transactions · {reportTotals.qty_sold} units sold · Total {pesos(reportTotals.total_centavos)}{isOwner && <> · Est. gross profit {estimatedProfitComplete ? pesos(estimatedProfitTotal) : 'incomplete cost data'}</>} · Average {pesos(averageSale)}
           </div>
+          {isOwner && <p className="px-4 pb-3 text-sm text-base-content/60">Gross profit is an estimate using current product costs. Cost changes can affect past reports. A period with an unknown product cost is marked incomplete.</p>}
           </div>
         )}
         {!isOwner && <div className="border-t border-base-300 px-4 py-3 text-sm text-base-content/60">This report includes only the sales you rang up.</div>}
       </div>
-     )}
 
       {isOwner && reportRequested && !report.loading && !report.error && inventory && (
         <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm">

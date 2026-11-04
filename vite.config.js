@@ -28,6 +28,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     build: { sourcemap: false, chunkSizeWarningLimit: 600 },
+    // Integration tests import the sibling backend's local harness.
+    server: { fs: { allow: ['..'] } },
     // `npm run test:integration` (INTEGRATION=1) runs the real pages against the real backend + database.
     test: process.env.INTEGRATION
       ? { environment: 'jsdom', globals: true, setupFiles: './src/test/setup.js', css: false, include: ['src/integration/**/*.test.jsx'],

@@ -9,15 +9,19 @@ export function AuthProvider({ children }) {
   // status: loading | anon | ready | error
   const [state, setState] = useState({ status: 'loading', profile: null, email: null, message: null });
   const userIdRef = useRef(null);
+  const authRevisionRef = useRef(0);
 
-  const loadProfile = useCallback(async (session) => {
+  const loadProfile = useCallback(async (session, revision) => {
     try {
       const { data } = await api('/api/me');
+      if (revision !== authRevisionRef.current) return;
       setState({ status: 'ready', profile: data, email: session.user.email, message: null });
     } catch (e) {
+      if (revision !== authRevisionRef.current) return;
       if (e.status === 401 || e.status === 403) {          // no profile / disabled / expired
         userIdRef.current = null;
         await supabase.auth.signOut();
+        if (revision !== authRevisionRef.current) return;
         setState({ status: 'anon', profile: null, email: null, message: e.message });
       } else {
         setState({ status: 'error', profile: null, email: null, message: e.message });
@@ -27,11 +31,17 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const handle = (session) => {
-      if (!session) { userIdRef.current = null; setState((s) => ({ status: 'anon', profile: null, email: null, message: s.message })); return; }
+      if (!session) {
+        authRevisionRef.current += 1;
+        userIdRef.current = null;
+        setState((s) => ({ status: 'anon', profile: null, email: null, message: s.message }));
+        return;
+      }
       if (userIdRef.current === session.user.id) return;    // token refresh: nothing to reload
+      const revision = ++authRevisionRef.current;
       userIdRef.current = session.user.id;
       setState((s) => ({ ...s, status: 'loading', message: null }));
-      loadProfile(session);
+      loadProfile(session, revision);
     };
     supabase.auth.getSession().then(({ data }) => handle(data.session));
     // Deferred: calling supabase methods synchronously inside this callback can deadlock the client.
@@ -48,8 +58,15 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => { await supabase.auth.signOut(); }, []);
   const retry = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
+    const revision = ++authRevisionRef.current;
     userIdRef.current = null;
-    if (data.session) { setState((s) => ({ ...s, status: 'loading' })); userIdRef.current = data.session.user.id; loadProfile(data.session); }
+    if (data.session) {
+      setState((s) => ({ ...s, status: 'loading' }));
+      userIdRef.current = data.session.user.id;
+      loadProfile(data.session, revision);
+    } else {
+      setState((s) => ({ ...s, status: 'anon', profile: null, email: null }));
+    }
   }, [loadProfile]);
 
   return <Ctx.Provider value={{ ...state, login, logout, retry, isOwner: state.profile?.role === 'owner' }}>{children}</Ctx.Provider>;

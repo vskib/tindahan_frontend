@@ -1,5 +1,6 @@
 import { lazy, Suspense, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 import { isAmbiguous } from '../lib/checkout.js';
 import { useDebounced, useFetch } from '../lib/hooks.js';
 import { addProduct, setQty, removeLine, cartTotal, cartCount, toCheckoutItems } from '../lib/cart.js';
@@ -10,21 +11,47 @@ import { ErrorAlert, Loading, Empty, Spin } from '../components/Ui.jsx';
 
 const BarcodeScanner = lazy(() => import('../components/BarcodeScanner.jsx'));
 const QUICK_CASH = [2000, 5000, 10000, 50000, 100000];   // centavos: ₱20 ₱50 ₱100 ₱500 ₱1,000
+const CHECKOUT_KEY_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function readPendingAttempt(storageKey) {
+  if (!storageKey || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return null;
+    const value = JSON.parse(raw);
+    const valid = CHECKOUT_KEY_RE.test(value?.key ?? '')
+      && Number.isSafeInteger(value?.cash) && value.cash > 0
+      && typeof value?.cashText === 'string'
+      && Array.isArray(value?.items) && value.items.length > 0 && value.items.length <= 100
+      && value.items.every((item) => typeof item.product_id === 'string' && Number.isInteger(item.qty) && item.qty > 0)
+      && Array.isArray(value?.cart) && value.cart.length === value.items.length
+      && value.cart.every((item) => typeof item.product_id === 'string' && Number.isInteger(item.qty) && item.qty > 0
+        && typeof item.name === 'string' && Number.isInteger(item.price_centavos));
+    if (valid) return value;
+    window.localStorage.removeItem(storageKey);
+  } catch { /* Storage can be unavailable or contain malformed data. */ }
+  return null;
+}
 
 export default function POS() {
+  const { profile } = useAuth();
+  const storageKey = profile?.id ? `che-tindahan:pending-checkout:${profile.id}` : null;
+  const [restoredAttempt] = useState(() => readPendingAttempt(storageKey));
   const [search, setSearch] = useState('');
   const q = useDebounced(search, 250);
   const products = useFetch(() => api(`/api/products?pageSize=30&search=${encodeURIComponent(q)}`), [q]);
 
-  const [cart, setCart] = useState([]);
-  const [cashText, setCashText] = useState('');
+  const [cart, setCart] = useState(restoredAttempt?.cart ?? []);
+  const [cashText, setCashText] = useState(restoredAttempt?.cashText ?? '');
   // idle -> submitting -> done | idle (refused) | unknown (outcome not confirmed)
-  const [phase, setPhase] = useState('idle');
+  const [phase, setPhase] = useState(restoredAttempt ? 'unknown' : 'idle');
   const [checking, setChecking] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState(restoredAttempt
+    ? { kind: 'warning', text: 'An unfinished checkout was restored. Check whether it was saved before starting another sale.' }
+    : null);
   const [receipt, setReceipt] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const attempt = useRef(null);      // { key, items, cash }: one idempotency key per checkout attempt
+  const attempt = useRef(restoredAttempt); // Persist the exact payload while the outcome is unknown.
   const inFlight = useRef(false);    // blocks double-clicks even before React re-renders
   const searchRef = useRef(null);
 
@@ -34,8 +61,20 @@ export default function POS() {
   const enough = cash !== null && cash >= total;
   const canPay = cart.length > 0 && enough && phase === 'idle';
 
+  const saveAttempt = (value) => {
+    attempt.current = value;
+    if (!storageKey) return;
+    try { window.localStorage.setItem(storageKey, JSON.stringify(value)); } catch { /* Keep in-memory recovery if storage is unavailable. */ }
+  };
+  const clearAttempt = () => {
+    attempt.current = null;
+    if (!storageKey) return;
+    try { window.localStorage.removeItem(storageKey); } catch { /* The in-memory attempt is still cleared. */ }
+  };
+
   const add = (p) => {
-    if (locked || p.stock_qty < 1) return;
+    if (locked) return;
+    if (p.stock_qty < 1) { setMessage({ kind: 'warning', text: `${p.name} is out of stock.` }); return; }
     const line = cart.find((l) => l.product_id === p.id);
     if (line && line.qty >= p.stock_qty) { setMessage({ kind: 'warning', text: `Only ${p.stock_qty} of ${p.name} in stock.` }); return; }
     setMessage(null);
@@ -51,11 +90,26 @@ export default function POS() {
   const onSearchKey = async (e) => {
     if (e.key !== 'Enter' || !search.trim() || locked) return;
     e.preventDefault();
+    const term = search.trim();
     try {
-      const { data } = await api(`/api/products?pageSize=5&search=${encodeURIComponent(search.trim())}`);
-      const exact = data.find((p) => p.barcode && p.barcode.toLowerCase() === search.trim().toLowerCase());
+      let barcodeProduct = null;
+      try {
+        const result = await api(`/api/products/by-barcode?barcode=${encodeURIComponent(term)}`);
+        barcodeProduct = result.data;
+      } catch (err) {
+        if (err.status !== 404) throw err;
+      }
+      if (barcodeProduct) {
+        if (barcodeProduct.stock_qty < 1) setMessage({ kind: 'warning', text: `${barcodeProduct.name} is out of stock.` });
+        else { add(barcodeProduct); setSearch(''); }
+        return;
+      }
+
+      const { data } = await api(`/api/products?pageSize=5&search=${encodeURIComponent(term)}`);
+      const exact = data.find((p) => p.barcode && p.barcode.toLowerCase() === term.toLowerCase());
       const pick = exact ?? (data.length === 1 ? data[0] : null);
-      if (pick) { add(pick); setSearch(''); }
+      if (pick?.stock_qty < 1) setMessage({ kind: 'warning', text: `${pick.name} is out of stock.` });
+      else if (pick) { add(pick); setSearch(''); }
       else setMessage({ kind: 'warning', text: data.length ? 'Several products match. Tap the one you want.' : 'No product found.' });
     } catch (err) { setMessage({ kind: 'danger', text: err.message }); }
   };
@@ -77,13 +131,15 @@ export default function POS() {
     if (inFlight.current) return;
     // The key and the payload are fixed when an attempt starts. If the outcome is unknown, retrying sends
     // exactly the same key and payload, so the server can never record it twice.
-    if (!attempt.current) attempt.current = { key: crypto.randomUUID(), items: toCheckoutItems(cart), cash };
+    if (!attempt.current) saveAttempt({
+      key: crypto.randomUUID(), items: toCheckoutItems(cart), cash, cashText, cart,
+    });
     const { key, items, cash: cashSent } = attempt.current;
     inFlight.current = true;
     setPhase('submitting'); setMessage(null);
     try {
       const res = await api('/api/checkout', { method: 'POST', body: { idempotency_key: key, items, cash_received_centavos: cashSent } });
-      attempt.current = null;
+      clearAttempt();
       setReceipt(res.data);              // shown only because the server confirmed the commit
       setPhase('done');
       products.reload();
@@ -91,7 +147,7 @@ export default function POS() {
       if (isAmbiguous(e)) {
         setPhase('unknown');             // keep the key; do NOT let the cashier start over blindly
       } else {
-        attempt.current = null;          // refused: nothing was saved, so the next attempt gets a fresh key
+        clearAttempt();                  // refused: nothing was saved, so the next attempt gets a fresh key
         setMessage({ kind: 'danger', text: e.message });
         setPhase('idle');
         if (e.code === 'INSUFFICIENT_STOCK' || e.code === 'INVALID_PRODUCT') products.reload();
@@ -106,7 +162,7 @@ export default function POS() {
     setChecking(true); setMessage(null);
     try {
       const r = await api(`/api/checkout/${attempt.current.key}`);
-      if (r.committed) { attempt.current = null; setReceipt(r.receipt); setPhase('done'); products.reload(); }
+      if (r.committed) { clearAttempt(); setReceipt(r.receipt); setPhase('done'); products.reload(); }
       else setMessage({ kind: 'warning', text: 'This sale was NOT saved. It is safe to try this same sale again.' });
     } catch (e) {
       setMessage({ kind: 'danger', text: `Still cannot confirm: ${e.message}` });
@@ -114,7 +170,7 @@ export default function POS() {
   }
 
   const nextCustomer = () => {
-    attempt.current = null;
+    clearAttempt();
     setCart([]); setCashText(''); setReceipt(null); setMessage(null); setPhase('idle');
     searchRef.current?.focus();
   };
@@ -135,7 +191,7 @@ export default function POS() {
         <div className="grid grid-cols-12 gap-2">
           {list.map((p) => (
             <div className="col-span-6 md:col-span-4" key={p.id}>
-              <button className="btn btn-outline btn-primary h-auto min-h-22 w-full flex-col items-start p-2 text-left" disabled={locked || p.stock_qty < 1} onClick={() => add(p)}>
+              <button className="product-tile btn btn-outline btn-primary h-auto min-h-22 w-full flex-col items-start p-2 text-left" disabled={locked || p.stock_qty < 1} onClick={() => add(p)}>
                 <div className="font-semibold">{p.name}</div>
                 <div className="text-xl">{pesos(p.price_centavos)}</div>
                 {p.stock_qty < 1 ? <span className="badge badge-neutral">Out of stock</span>

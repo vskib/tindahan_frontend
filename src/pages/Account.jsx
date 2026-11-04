@@ -32,6 +32,7 @@ function ChangePassword() {
 
 function AddCashier({ onClose, onSaved }) {
   const [f, setF] = useState({ full_name: '', email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false); const [error, setError] = useState(null);
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
   const submit = async (e) => {
@@ -48,7 +49,7 @@ function AddCashier({ onClose, onSaved }) {
         {error && <div className="alert alert-error">{error}</div>}
         <div className="mb-3"><label className="label-text block font-medium" htmlFor="cn">Full name</label><input id="cn" className="input input-bordered w-full" required value={f.full_name} onChange={set('full_name')} /></div>
         <div className="mb-3"><label className="label-text block font-medium" htmlFor="ce">Email (used to log in)</label><input id="ce" type="email" className="input input-bordered w-full" required value={f.email} onChange={set('email')} /></div>
-        <div className="mb-1"><label className="label-text block font-medium" htmlFor="cp">Starting password</label><input id="cp" type="text" autoComplete="off" className="input input-bordered w-full" required minLength={10} value={f.password} onChange={set('password')} />
+        <div className="mb-1"><label className="label-text block font-medium" htmlFor="cp">Starting password</label><div className="join w-full"><input id="cp" type={showPassword ? 'text' : 'password'} autoComplete="new-password" className="input input-bordered join-item w-full" required minLength={10} value={f.password} onChange={set('password')} /><button type="button" className="btn btn-outline join-item" aria-pressed={showPassword} onClick={() => setShowPassword((shown) => !shown)}>{showPassword ? 'Hide' : 'Show'}</button></div>
           <div className="text-sm text-base-content/60">At least 10 characters. Give it to the cashier privately; they can change it under Account.</div></div>
       </form>
     </Modal>
@@ -112,7 +113,7 @@ export default function Account() {
             <ul className="list-disc space-y-1 ps-5 text-sm text-base-content/70">
               <li>Process sales and print receipts</li>
               <li>Browse active products without changing them</li>
-              <li>View your own sales history</li>
+              <li>View summaries and history for your own sales</li>
             </ul>
           </div>
           <p className="mb-0 text-sm text-base-content/60 sm:col-span-2">Both roles can update their own password and log out.</p>
