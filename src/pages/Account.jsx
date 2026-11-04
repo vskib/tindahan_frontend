@@ -6,34 +6,6 @@ import { useFetch } from '../lib/hooks.js';
 import Modal from '../components/Modal.jsx';
 import { ErrorAlert, Loading, Spin } from '../components/Ui.jsx';
 
-function ChangeEmail({ currentEmail }) {
-  const [newEmail, setNewEmail] = useState(currentEmail);
-  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
-  const submit = async (e) => {
-    e.preventDefault();
-    const email = newEmail.trim();
-    if (email.toLowerCase() === currentEmail.toLowerCase()) return setMsg({ kind: 'danger', text: 'Enter a different email address.' });
-    setBusy(true); setMsg(null);
-    try {
-      const { error } = await supabase.auth.updateUser({ email });
-      if (error) setMsg({ kind: 'danger', text: error.message });
-      else { setMsg({ kind: 'success', text: 'Confirmation email sent. Follow the link to complete the email change.' }); setNewEmail(currentEmail); }
-    } catch (error) {
-      setMsg({ kind: 'danger', text: error.message });
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="card mb-3 border border-base-300 bg-base-100 shadow-sm"><div className="border-b border-base-300 px-4 py-3"><strong>Change email</strong></div>
-      <form className="card-body" onSubmit={submit}>
-        {msg && <div className={`alert alert-${msg.kind === 'danger' ? 'error' : msg.kind}`} role={msg.kind === 'danger' ? 'alert' : 'status'}>{msg.text}</div>}
-        <div className="mb-3"><label className="label-text block font-medium" htmlFor="new-email">New email</label><input id="new-email" type="email" autoComplete="email" className="input input-bordered w-full" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} /></div>
-        <button className="btn btn-primary" disabled={busy}>{busy && <Spin />}Update email</button>
-      </form></div>
-  );
-}
-
 function ChangePassword() {
   const [pw, setPw] = useState(''); const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
@@ -124,8 +96,6 @@ export default function Account() {
         <div className="mb-3">{isOwner ? 'Owner' : 'Cashier'} · {profile.store_name}</div>
         <button className="btn btn-outline btn-error" onClick={logout}>Log out</button>
       </div></div>
-      {isOwner && <ChangeEmail currentEmail={email} />}
-
       <ChangePassword />
       {isOwner && <Staff myId={profile.id} />}
     </div>

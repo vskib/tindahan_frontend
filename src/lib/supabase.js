@@ -7,7 +7,7 @@ export const configError = !url || !anonKey || !import.meta.env.VITE_API_URL
   ? 'Missing VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY or VITE_API_URL. See frontend/.env.example.'
   : null;
 
-// The browser uses Supabase for authentication and account credential updates. Store data goes through the Express API.
+// The browser uses Supabase ONLY to log in and out. All store data goes through the Express API.
 export const supabase = configError ? null : createClient(url, anonKey, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
 });
